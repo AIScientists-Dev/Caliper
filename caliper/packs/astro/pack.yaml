@@ -1,0 +1,78 @@
+name: astro
+description: >
+  SKELETON pack for astrophysics — same architecture as the bio pack, proving the
+  core is domain-agnostic. Not yet validated end-to-end; the working agent + trust
+  calibration ships for bio first, then this pack is fleshed out with a design
+  partner.
+status: skeleton
+tools:
+  - name: astropy
+    when_to_use: Core astronomy utilities — FITS I/O, WCS/coordinates, units, tables, cosmology.
+    install: "pip install astropy"
+    version: "6.1"
+    invocation: "astropy.io.fits / astropy.wcs / astropy.coordinates"
+    inputs: "FITS, tables"
+    outputs: "arrays, coordinates, tables"
+  - name: photutils
+    when_to_use: Source detection and aperture/PSF photometry on astronomical images.
+    install: "pip install photutils"
+    version: "1.13"
+    invocation: "photutils.detection / photutils.aperture"
+    inputs: "image (FITS)"
+    outputs: "source catalogue, fluxes"
+  - name: specutils
+    when_to_use: 1D spectral analysis — continuum fitting, line measurement, redshift.
+    install: "pip install specutils"
+    version: "1.16"
+    invocation: "specutils.Spectrum1D + analysis fns"
+    inputs: "spectra"
+    outputs: "line fluxes, equivalent widths"
+  - name: sep
+    when_to_use: Fast background estimation and source extraction (SExtractor in Python) for large images.
+    install: "pip install sep"
+    version: "1.2"
+    invocation: "sep.Background / sep.extract"
+    inputs: "image array"
+    outputs: "background, object catalogue"
+  - name: emcee
+    when_to_use: MCMC posterior sampling for model fitting; use when you need parameter uncertainties.
+    install: "pip install emcee"
+    version: "3.1"
+    invocation: "emcee.EnsembleSampler(...).run_mcmc(...)"
+    inputs: "log-likelihood + data"
+    outputs: "posterior samples"
+  - name: dynesty
+    when_to_use: Nested sampling for posteriors AND Bayesian evidence (model comparison).
+    install: "pip install dynesty"
+    version: "2.1"
+    invocation: "dynesty.NestedSampler(...).run_nested()"
+    inputs: "log-likelihood + prior transform"
+    outputs: "posterior + evidence"
+  - name: lmfit
+    when_to_use: Non-linear least-squares curve/line fitting with bounds and uncertainties.
+    install: "pip install lmfit"
+    version: "1.3"
+    invocation: "lmfit.Model(...).fit(...)"
+    inputs: "data + model"
+    outputs: "best-fit params + errors"
+  - name: astroquery
+    when_to_use: Programmatic queries to archives/catalogues (SIMBAD, Vizier, MAST, Gaia).
+    install: "pip install astroquery"
+    version: "0.4.7"
+    invocation: "astroquery.<service>.query_*"
+    inputs: "query (coords/name)"
+    outputs: "catalogue tables"
+  - name: lightkurve
+    when_to_use: Time-series photometry from Kepler/TESS — light curves, periodograms, transits.
+    install: "pip install lightkurve"
+    version: "2.4"
+    invocation: "lightkurve.search_lightcurve(...).download()"
+    inputs: "target id"
+    outputs: "light curve, periodogram"
+  - name: casa
+    when_to_use: Radio interferometry calibration and imaging (ALMA/VLA).
+    install: "see casa.nrao.edu (large; not pip)"
+    version: "6.6"
+    invocation: "casatasks: tclean, gaincal, applycal"
+    inputs: "visibility measurement sets"
+    outputs: "calibrated images/cubes"

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "caliper"
+version = "0.0.1"
+description = "An AI research analyst that knows when to trust itself."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "MorphMind" }]
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+openai = ["openai>=1.40"]
+llm = ["anthropic>=0.40", "openai>=1.40"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+include = ["caliper*"]
+
+[tool.setuptools.package-data]
+caliper = ["packs/**/*.yaml"]

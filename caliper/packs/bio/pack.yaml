@@ -1,0 +1,148 @@
+name: bio
+description: >
+  Curated tools for bulk and single-cell genomics: QC, alignment, quantification,
+  differential expression, peak calling, and multi-omics integration. Thin by
+  design — the planner already knows most invocations; we pin the correctness-
+  critical, version-sensitive tools and say when to reach for each.
+status: active
+tools:
+  - name: fastqc
+    when_to_use: First-pass quality control of raw FASTQ reads (per-base quality, adapters, duplication).
+    install: "conda install -c bioconda fastqc"
+    version: "0.12.1"
+    invocation: "fastqc <reads.fastq.gz> -o <outdir>"
+    inputs: "FASTQ"
+    outputs: "QC report (html/zip)"
+  - name: multiqc
+    when_to_use: Aggregate QC/logs from many tools (FastQC, STAR, Salmon) into one report.
+    install: "pip install multiqc"
+    version: "1.21"
+    invocation: "multiqc <analysis_dir>"
+    inputs: "tool logs"
+    outputs: "combined QC report"
+  - name: fastp
+    when_to_use: Fast adapter/quality trimming of FASTQ when you want one tool for filtering + reporting.
+    install: "conda install -c bioconda fastp"
+    version: "0.23.4"
+    invocation: "fastp -i <in.fq> -o <out.fq>"
+    inputs: "FASTQ"
+    outputs: "trimmed FASTQ"
+  - name: star
+    when_to_use: Spliced alignment of bulk RNA-seq reads to a reference genome (gold standard for RNA).
+    install: "conda install -c bioconda star"
+    version: "2.7.11b"
+    invocation: "STAR --genomeDir <idx> --readFilesIn <reads> --outSAMtype BAM SortedByCoordinate"
+    inputs: "FASTQ + genome index"
+    outputs: "sorted BAM"
+  - name: hisat2
+    when_to_use: Memory-light spliced aligner; alternative to STAR when resources are tight.
+    install: "conda install -c bioconda hisat2"
+    version: "2.2.1"
+    invocation: "hisat2 -x <idx> -U <reads> -S <out.sam>"
+    inputs: "FASTQ + index"
+    outputs: "SAM/BAM"
+  - name: salmon
+    when_to_use: Alignment-free transcript quantification of bulk RNA-seq (fast, bias-aware).
+    install: "conda install -c bioconda salmon"
+    version: "1.10.3"
+    invocation: "salmon quant -i <idx> -l A -r <reads> -o <out>"
+    inputs: "FASTQ + transcriptome index"
+    outputs: "transcript abundances (quant.sf)"
+  - name: featurecounts
+    when_to_use: Count aligned reads per gene/exon from BAM for downstream DE.
+    install: "conda install -c bioconda subread"
+    version: "2.0.6"
+    invocation: "featureCounts -a <gtf> -o counts.txt <bam>"
+    inputs: "BAM + GTF"
+    outputs: "count matrix"
+  - name: deseq2
+    when_to_use: Differential expression on bulk RNA-seq COUNT matrices; small-replicate, negative-binomial model.
+    install: "R: BiocManager::install('DESeq2')"
+    version: "1.44"
+    invocation: "DESeq2 in R: DESeqDataSetFromMatrix -> DESeq -> results"
+    inputs: "gene x sample counts + design"
+    outputs: "log2FC, p, padj per gene"
+  - name: edger
+    when_to_use: Differential expression alternative to DESeq2; good for complex designs / few replicates.
+    install: "R: BiocManager::install('edgeR')"
+    version: "4.2"
+    invocation: "edgeR in R: DGEList -> estimateDisp -> glmQLFit/glmQLFTest"
+    inputs: "counts + design"
+    outputs: "DE table"
+  - name: limma
+    when_to_use: Linear-model DE; use limma-voom for RNA-seq counts, or directly for array/normalised data.
+    install: "R: BiocManager::install('limma')"
+    version: "3.60"
+    invocation: "limma in R: voom -> lmFit -> eBayes -> topTable"
+    inputs: "expression matrix + design"
+    outputs: "DE table"
+  - name: gseapy
+    when_to_use: Gene-set enrichment / over-representation on a ranked or selected gene list.
+    install: "pip install gseapy"
+    version: "1.1.3"
+    invocation: "gseapy.enrichr / gseapy.prerank"
+    inputs: "gene list or ranked genes"
+    outputs: "enriched pathways"
+  - name: bowtie2
+    when_to_use: Short-read DNA alignment for ChIP-seq/ATAC-seq (non-spliced).
+    install: "conda install -c bioconda bowtie2"
+    version: "2.5.4"
+    invocation: "bowtie2 -x <idx> -U <reads> -S <out.sam>"
+    inputs: "FASTQ + index"
+    outputs: "SAM/BAM"
+  - name: bwa
+    when_to_use: DNA read alignment (bwa-mem) for ChIP-seq, CUT&RUN, WGS.
+    install: "conda install -c bioconda bwa"
+    version: "0.7.18"
+    invocation: "bwa mem <ref> <reads> > out.sam"
+    inputs: "FASTQ + reference"
+    outputs: "SAM/BAM"
+  - name: macs2
+    when_to_use: Peak calling for ChIP-seq / ATAC-seq (where is a factor/mark bound or chromatin open).
+    install: "pip install macs2"
+    version: "2.2.9.1"
+    invocation: "macs2 callpeak -t <chip.bam> -c <input.bam> -n <name>"
+    inputs: "aligned BAM (+control)"
+    outputs: "peaks (narrowPeak/broadPeak)"
+  - name: samtools
+    when_to_use: Sort/index/filter/convert SAM/BAM; near-universal prerequisite step.
+    install: "conda install -c bioconda samtools"
+    version: "1.20"
+    invocation: "samtools sort/index/view"
+    inputs: "SAM/BAM"
+    outputs: "BAM + index"
+  - name: bedtools
+    when_to_use: Interval arithmetic — intersect peaks with genes/regions; the backbone of position-based integration.
+    install: "conda install -c bioconda bedtools"
+    version: "2.31.1"
+    invocation: "bedtools intersect -a <A.bed> -b <B.bed>"
+    inputs: "BED/GFF/BAM"
+    outputs: "overlapping intervals"
+  - name: scanpy
+    when_to_use: Single-cell RNA-seq analysis in Python — QC, clustering, marker genes, UMAP.
+    install: "pip install scanpy"
+    version: "1.10"
+    invocation: "scanpy: pp.* -> tl.leiden -> tl.rank_genes_groups"
+    inputs: "cell x gene matrix (h5ad)"
+    outputs: "clusters, markers, embeddings"
+  - name: archr
+    when_to_use: Single-cell ATAC-seq analysis (scATAC) — accessibility, peak/gene links, trajectories.
+    install: "R: devtools::install_github('GreenleafLab/ArchR')"
+    version: "1.0.2"
+    invocation: "ArchR in R: ArrowFiles -> ArchRProject -> addPeak/GeneScore"
+    inputs: "scATAC fragments"
+    outputs: "accessibility, peak-gene links"
+  - name: signac
+    when_to_use: Single-cell chromatin (scATAC) integrated with Seurat workflows.
+    install: "R: install.packages('Signac')"
+    version: "1.14"
+    invocation: "Signac in R alongside Seurat objects"
+    inputs: "scATAC + scRNA"
+    outputs: "multimodal object"
+  - name: nf-core-rnaseq
+    when_to_use: Production, reproducible end-to-end bulk RNA-seq pipeline (QC->align->quant->QC) when you want a vetted whole pipeline rather than wiring steps.
+    install: "nextflow run nf-core/rnaseq"
+    version: "3.14.0"
+    invocation: "nextflow run nf-core/rnaseq --input samplesheet.csv --genome GRCh38"
+    inputs: "FASTQ samplesheet + genome"
+    outputs: "counts + full QC"

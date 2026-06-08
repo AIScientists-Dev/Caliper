@@ -1,0 +1,37 @@
+# Caliper bio pack — Stage 1 (ChIP-seq) execution environment.
+#
+# Small recipe; heavy tools install at deploy time on a Linux x86-64 host:
+#     conda env create -f environments/bio-chip.yml   # (or: mamba env create ...)
+#     conda activate caliper-bio-chip
+#
+# The paper's published analysis used genome build hg19 (GRCh37); align to hg19 so
+# peak coordinates compare directly to its figures. Genome + indices are fetched on
+# the host, not stored in git.
+name: caliper-bio-chip
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  # --- data acquisition (public GEO/SRA) ---
+  - sra-tools           # prefetch / fasterq-dump
+  - entrez-direct       # GEO/SRA metadata
+  # --- QC + trimming ---
+  - fastqc
+  - fastp
+  - multiqc
+  # --- alignment (DNA / ChIP reads) ---
+  - bwa
+  - bowtie2
+  - samtools
+  # --- peak calling + interval analysis ---
+  - macs2               # call binding/peak regions
+  - bedtools            # intersect peaks with genes/regions (position-based checks)
+  - deeptools           # coverage tracks (bigwig), signal at loci
+  - ucsc-bedgraphtobigwig
+  # --- glue ---
+  - pandas
+  - numpy
+  - scipy
+  - pyyaml
+  - pip

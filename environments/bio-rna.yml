@@ -1,0 +1,44 @@
+# Caliper bio pack — Stage 1 (RNA) execution environment.
+#
+# This is the SMALL recipe file. It lives in the repo. The heavy tools it names are
+# downloaded and installed at deploy time, on a Linux x86-64 host, into a conda env
+# OUTSIDE the repo:
+#
+#     conda env create -f environments/bio-rna.yml   # (or: mamba env create ...)
+#     conda activate caliper-bio-rna
+#
+# Reference genomes / indices are larger still and are fetched separately on the host;
+# they are not part of this spec and never live in git.
+name: caliper-bio-rna
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  # --- data acquisition (public GEO/SRA) ---
+  - sra-tools           # prefetch / fasterq-dump : pull public FASTQ from SRA
+  - entrez-direct       # query GEO/SRA metadata
+  # --- QC + trimming ---
+  - fastqc
+  - fastp
+  - multiqc
+  # --- alignment / quantification ---
+  - star                # spliced aligner (RAM-heavy: ~30-40 GB for human index)
+  - hisat2              # lighter-weight aligner alternative
+  - salmon              # alignment-free transcript quantification
+  - subread             # featureCounts : per-gene read counts
+  - samtools
+  # --- differential expression (R / Bioconductor) ---
+  - r-base
+  - bioconductor-deseq2
+  - bioconductor-edger
+  - bioconductor-limma
+  - bioconductor-tximport
+  # --- enrichment + glue ---
+  - gseapy
+  - pandas
+  - numpy
+  - scipy
+  - pyyaml
+  # --- Caliper itself (editable, optional) ---
+  - pip

@@ -1,0 +1,17 @@
+Caliper
+Copyright 2026 MorphMind, Inc.
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Caliper is an independent, clean-room reimplementation of a curated-tool + agent
+architecture. It does not incorporate source code from the projects below; they are
+acknowledged as conceptual prior art that informed the design:
+
+  - Biomni (snap-stanford), Apache License 2.0 — general-purpose biomedical agent.
+  - cmbagent (CMBAgents), Apache License 2.0 — astronomy planning & control agent.
+  - Mephisto (ZechangSun), MIT License — SED-modeling LLM agent.
+
+The domain tools referenced by Caliper's packs (e.g. STAR, DESeq2, MACS2, Scanpy,
+Astropy, emcee) are separate works distributed under their own licenses. Caliper
+invokes them; it does not redistribute them. Review each tool's license before any
+commercial deployment.
