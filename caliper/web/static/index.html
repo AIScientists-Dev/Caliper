@@ -97,6 +97,7 @@
   <div class="brand"><span class="dot">⟡</span> Caliper <small>v0.1</small></div>
   <button class="btn primary" onclick="newChat()">✎ New analysis</button>
   <button class="btn" onclick="toggleDrawer()">📁 Browse &amp; select data</button>
+  <button class="btn" onclick="showLog()">🔒 Access log</button>
   <div id="sessions"></div>
   <div class="tagline">An analyst that knows when to trust itself.</div>
 </div>
@@ -119,6 +120,13 @@
   <input id="searchbox" placeholder="search filenames…" onkeydown="if(event.key==='Enter')doSearch()">
   <div id="crumbs"></div>
   <div id="listing"></div>
+</div>
+
+<div id="logmodal" style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:8">
+  <div style="background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:22px;width:580px;max-height:72vh;overflow:auto">
+    <h3 style="color:var(--mint);margin:0 0 12px;display:flex;justify-content:space-between">Login access log <span style="cursor:pointer;color:var(--faint)" onclick="document.getElementById('logmodal').style.display='none'">✕</span></h3>
+    <table id="logtable"><thead><tr><th>time</th><th>IP address</th><th>event</th><th>result</th></tr></thead><tbody></tbody></table>
+  </div>
 </div>
 
 <div id="overlay"><div id="login">
@@ -219,6 +227,12 @@ async function openSession(id){const s=await(await api('/api/session/'+id)).json
   s.messages.forEach(m=>{if(m.role==='user')$('thread').appendChild(mk('user','You','<div class="text">'+esc(m.content)+'</div>',true));
     else{const mm=mk('caliper','Caliper','');const det=document.createElement('details');const su=document.createElement('summary');su.textContent='✓ Done';const evs=el('events');det.appendChild(su);det.appendChild(evs);mm.querySelector('.body').appendChild(det);const rh=el('');mm.querySelector('.body').appendChild(rh);(m.events||[]).forEach(e=>handle(e,evs,rh,su,det));$('thread').appendChild(mm);}});scroll();}
 
+async function showLog(){try{const d=await(await api('/api/access-log')).json();
+  const tb=document.querySelector('#logtable tbody');tb.innerHTML='';
+  if(!d.length)tb.innerHTML='<tr><td colspan="4" style="color:var(--faint)">no logins yet</td></tr>';
+  d.forEach(e=>{const t=new Date(e.ts*1000).toLocaleString();const ok=e.ok?'<span class="up">success</span>':'<span class="down">FAILED</span>';
+    tb.insertAdjacentHTML('beforeend','<tr><td>'+t+'</td><td class="num">'+esc(e.ip)+'</td><td>'+esc(e.event)+'</td><td>'+ok+'</td></tr>');});
+  document.getElementById('logmodal').style.display='flex';}catch(e){}}
 async function init(){try{await api('/api/whoami');loadSessions();}catch(e){}}
 init();
 </script>

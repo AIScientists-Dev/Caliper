@@ -20,6 +20,7 @@ import queue
 import secrets
 import threading
 import time
+from collections import deque
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -38,8 +39,32 @@ WORKSPACE = os.path.realpath(get_workspace() or os.path.join(os.getcwd(), "calip
 PACK = os.environ.get("CALIPER_PACK", "bio")
 _SESSIONS = set()           # auth tokens
 _HISTORY: dict = {}         # session_id -> {"title":..., "ts":..., "messages":[...]}
+ACCESS_LOG = deque(maxlen=1000)   # recent login events {ts, ip, event, ok}
+_FAILS: dict = {}           # ip -> [count, last_ts]   (brute-force lockout)
+_LOCK_AFTER, _LOCK_WINDOW = 5, 300   # >=5 fails within 300s -> locked for 300s
 
 app = FastAPI(title="Caliper")
+
+
+def client_ip(request: Request) -> str:
+    return (request.headers.get("cf-connecting-ip")
+            or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or (request.client.host if request.client else "?"))
+
+
+def log_access(ip: str, event: str, ok: bool):
+    entry = {"ts": int(time.time()), "ip": ip, "event": event, "ok": ok}
+    ACCESS_LOG.append(entry)
+    try:
+        with open(os.path.join(WORKSPACE, "access.log"), "a") as f:
+            f.write(json.dumps(entry) + "\n")
+    except OSError:
+        pass
+
+
+def _locked(ip: str) -> bool:
+    cnt, last = _FAILS.get(ip, (0, 0))
+    return cnt >= _LOCK_AFTER and (time.time() - last) < _LOCK_WINDOW
 
 
 # --- auth ------------------------------------------------------------------------
@@ -53,15 +78,30 @@ def require_auth(request: Request):
 
 @app.post("/api/login")
 async def login(request: Request):
+    ip = client_ip(request)
+    if _locked(ip):
+        log_access(ip, "login-locked", False)
+        return JSONResponse({"ok": False, "error": "too many attempts; try later"}, status_code=429)
     body = await request.json()
     pw = os.environ.get("CALIPER_WEB_PASSWORD")
-    if pw and body.get("password") == pw:
+    if pw and secrets.compare_digest(str(body.get("password", "")), pw):
         tok = secrets.token_urlsafe(24)
         _SESSIONS.add(tok)
+        _FAILS.pop(ip, None)
+        log_access(ip, "login", True)
+        secure = request.headers.get("x-forwarded-proto", "http") == "https"
         r = JSONResponse({"ok": True})
-        r.set_cookie("caliper_session", tok, httponly=True, samesite="lax")
+        r.set_cookie("caliper_session", tok, httponly=True, samesite="lax", secure=secure)
         return r
+    cnt, _ = _FAILS.get(ip, (0, 0))
+    _FAILS[ip] = (cnt + 1, time.time())
+    log_access(ip, "login", False)
     return JSONResponse({"ok": False}, status_code=401)
+
+
+@app.get("/api/access-log")
+def access_log(_=Depends(require_auth)):
+    return list(ACCESS_LOG)[-300:][::-1]
 
 
 @app.get("/api/whoami")
