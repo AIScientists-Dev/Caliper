@@ -124,7 +124,8 @@ class CaliperAgent:
         stdout, answer = "", {}
         for st in steps:
             emit({"type": "step", "tool": st.tool, "rationale": st.rationale})
-            res = self.executor.run(st.code, inputs=data_files)
+            res = self.executor.run(st.code, inputs=data_files,
+                                    on_output=lambda c: emit({"type": "stdout", "text": c[-800:]}))
             stdout += res.stdout
             if res.stderr:
                 stdout += f"\n[stderr] {res.stderr}"

@@ -28,6 +28,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Streamin
 
 from ..core.agent import CaliperAgent
 from ..core.executor import Executor
+from ..core.remote_executor import RemoteExecutor
 from ..core.registry import load_pack
 from ..config import get_workspace
 from ..llm import make_llm
@@ -178,7 +179,21 @@ def search(q: str, _=Depends(require_auth), limit: int = 100):
 def _build_agent() -> CaliperAgent:
     pack = load_pack(PACK)
     llm = make_llm()
-    return CaliperAgent(pack=pack, llm=llm, judge=Judge(llm), executor=Executor())
+    host = os.environ.get("CALIPER_REMOTE_HOST")
+    if host:  # dispatch compute to the lab server
+        ex = RemoteExecutor(
+            host=host,
+            user=os.environ.get("CALIPER_REMOTE_USER", "guest"),
+            key_filename=os.environ.get("CALIPER_REMOTE_KEY") or None,
+            password=os.environ.get("CALIPER_REMOTE_PASSWORD") or None,
+            workspace=os.environ.get("CALIPER_WORKSPACE", "."),
+            python=os.environ.get("CALIPER_REMOTE_PYTHON", "python3"),
+            path_prepend=os.environ.get("CALIPER_REMOTE_PATH", ""),
+            bwrap=os.environ.get("CALIPER_REMOTE_BWRAP", ""),
+        )
+    else:
+        ex = Executor()
+    return CaliperAgent(pack=pack, llm=llm, judge=Judge(llm), executor=ex)
 
 
 _AGENT = None

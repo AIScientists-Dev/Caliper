@@ -11,6 +11,7 @@ The first two layers are deliberately commodity. The trust layer is the moat.
 from .core.registry import load_pack, Pack, ToolSpec
 from .core.agent import CaliperAgent, CaliperResult
 from .core.executor import Executor
+from .core.remote_executor import RemoteExecutor
 from .trust.gate import calibrate, CalibratedGate, GateDecision
 from .trust.judge import Judge
 from .trust.feedback import FeedbackStore
@@ -20,7 +21,7 @@ from .llm import make_llm, BaseLLM, AnthropicLLM, OpenAILLM, MockLLM
 __version__ = "0.0.1"
 __all__ = [
     "load_pack", "Pack", "ToolSpec",
-    "CaliperAgent", "CaliperResult", "Executor",
+    "CaliperAgent", "CaliperResult", "Executor", "RemoteExecutor",
     "calibrate", "CalibratedGate", "GateDecision",
     "Judge", "FeedbackStore", "calibrate_from_runs", "export_review_sheet",
     "make_llm", "BaseLLM", "AnthropicLLM", "OpenAILLM", "MockLLM",

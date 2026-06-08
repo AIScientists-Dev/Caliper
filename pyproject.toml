@@ -22,7 +22,7 @@ caliper-web = "caliper.web.server:run"
 anthropic = ["anthropic>=0.40"]
 openai = ["openai>=1.40"]
 llm = ["anthropic>=0.40", "openai>=1.40"]
-web = ["fastapi>=0.110", "uvicorn>=0.29"]
+web = ["fastapi>=0.110", "uvicorn>=0.29", "paramiko>=3.0"]
 dev = ["pytest>=8.0"]
 
 [tool.setuptools.packages.find]

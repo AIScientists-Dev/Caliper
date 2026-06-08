@@ -73,6 +73,12 @@ def check_code(code: str, workspace: str, readonly_paths: Iterable[str]) -> List
         if ro and ro in code:
             if any(w in code for w in _WRITE_VERBS) or re.search(r">>?\s*" + re.escape(ro), code):
                 violations.append(f"write/delete touching read-only input: {ro}")
+    # Writing to an absolute path outside the workspace (e.g. open('/data/x','w')).
+    ws = workspace.rstrip("/")
+    for m in re.finditer(r"""open\(\s*['"](/[^'"]+)['"]\s*,\s*['"]([^'"]+)['"]""", code):
+        path, mode = m.group(1), m.group(2)
+        if any(ch in mode for ch in "wax+") and not (path == ws or path.startswith(ws + "/")):
+            violations.append(f"write to a path outside the workspace: {path}")
     return sorted(set(violations))
 
 
@@ -97,7 +103,7 @@ class Executor:
             return True
         return (sys.platform.startswith("linux") and shutil.which("bwrap") is not None)
 
-    def run(self, code: str, inputs: Optional[List[dict]] = None) -> ExecResult:
+    def run(self, code: str, inputs: Optional[List[dict]] = None, on_output=None) -> ExecResult:
         os.makedirs(self.workspace, exist_ok=True)
 
         readonly = set(self.readonly_inputs)
@@ -135,4 +141,6 @@ class Executor:
                                   text=True, timeout=self.timeout)
         except subprocess.TimeoutExpired as e:
             return ExecResult(False, e.stdout or "", f"timeout after {self.timeout}s", -1)
+        if on_output and proc.stdout:
+            on_output(proc.stdout)
         return ExecResult(proc.returncode == 0, proc.stdout, proc.stderr, proc.returncode)
