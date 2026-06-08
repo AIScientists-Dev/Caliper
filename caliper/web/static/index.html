@@ -90,6 +90,8 @@
   #login{background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:28px;width:320px}
   #login h3{color:var(--mint);margin:0 0 4px} #login p{color:var(--mut);font-size:12.5px;margin:0 0 14px}
   #login input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0a0f0d;color:var(--text);margin-bottom:12px;outline:none}
+  .labcard{background:var(--panel2);border:1px solid var(--line2);border-radius:14px;padding:28px 34px;text-align:center;cursor:pointer;transition:.15s;min-width:210px}
+  .labcard:hover{border-color:var(--mint);background:var(--panel);transform:translateY(-2px)}
 </style>
 </head>
 <body>
@@ -125,15 +127,26 @@
 <div id="logmodal" style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:8">
   <div style="background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:22px;width:580px;max-height:72vh;overflow:auto">
     <h3 style="color:var(--mint);margin:0 0 12px;display:flex;justify-content:space-between">Login access log <span style="cursor:pointer;color:var(--faint)" onclick="document.getElementById('logmodal').style.display='none'">✕</span></h3>
-    <table id="logtable"><thead><tr><th>time</th><th>IP address</th><th>event</th><th>result</th></tr></thead><tbody></tbody></table>
+    <table id="logtable"><thead><tr><th>time</th><th>email</th><th>IP address</th><th>event</th><th>result</th></tr></thead><tbody></tbody></table>
   </div>
 </div>
 
 <div id="overlay"><div id="login">
-  <h3>⟡ Caliper</h3><p>Enter the access password to continue.</p>
-  <input id="pw" type="password" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()">
-  <button class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Enter</button>
-  <div id="loginerr" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+  <div id="landing">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:22px;font-weight:700;margin-bottom:18px"><span style="color:var(--mint);font-size:24px">⟡</span> Caliper</div>
+    <div class="labcard" onclick="showLoginForm()">
+      <div style="font-size:30px">🔬</div>
+      <div style="font-weight:700;font-size:16px;margin-top:8px" id="labname">Lab</div>
+      <div style="color:var(--faint);font-size:12px;margin-top:4px">click to sign in</div>
+    </div>
+  </div>
+  <div id="loginform" style="display:none">
+    <h3 id="loginlab">Lab</h3><p>Sign in to continue.</p>
+    <input id="email" type="email" placeholder="email" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    <input id="pw" type="password" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Sign in</button>
+    <div id="loginerr" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+  </div>
 </div></div>
 
 <script>
@@ -144,8 +157,9 @@ const scroll=()=>{$('chat').scrollTop=$('chat').scrollHeight};
 function el(cls,html){const d=document.createElement('div');if(cls)d.className=cls;if(html!=null)d.innerHTML=html;return d;}
 
 async function api(u,o){const r=await fetch(u,o);if(r.status===401){$('overlay').style.display='flex';throw new Error('auth');}return r;}
-async function doLogin(){const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('pw').value})});
-  if(r.ok){$('overlay').style.display='none';init();}else $('loginerr').textContent='Incorrect password.';}
+function showLoginForm(){$('landing').style.display='none';$('loginform').style.display='block';const e=$('email');if(e)e.focus();}
+async function doLogin(){const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:($('email')?$('email').value:''),password:$('pw').value})});
+  if(r.ok){$('overlay').style.display='none';init();}else $('loginerr').textContent='Incorrect email or password.';}
 
 function newChat(){SID=null;SELECTED=[];$('thread').innerHTML='';$('thread').appendChild($('empty')||el());renderCtx();}
 function renderCtx(){const c=$('ctx');c.innerHTML='';SELECTED.forEach((p,i)=>{const ch=el('chip','📄 <b>'+esc(p.split('/').pop())+'</b><span onclick="unselect('+i+')">✕</span>');c.appendChild(ch);});}
@@ -229,11 +243,14 @@ async function openSession(id){const s=await(await api('/api/session/'+id)).json
 
 async function showLog(){try{const d=await(await api('/api/access-log')).json();
   const tb=document.querySelector('#logtable tbody');tb.innerHTML='';
-  if(!d.length)tb.innerHTML='<tr><td colspan="4" style="color:var(--faint)">no logins yet</td></tr>';
+  if(!d.length)tb.innerHTML='<tr><td colspan="5" style="color:var(--faint)">no logins yet</td></tr>';
   d.forEach(e=>{const t=new Date(e.ts*1000).toLocaleString();const ok=e.ok?'<span class="up">success</span>':'<span class="down">FAILED</span>';
-    tb.insertAdjacentHTML('beforeend','<tr><td>'+t+'</td><td class="num">'+esc(e.ip)+'</td><td>'+esc(e.event)+'</td><td>'+ok+'</td></tr>');});
+    tb.insertAdjacentHTML('beforeend','<tr><td>'+t+'</td><td>'+esc(e.email||'')+'</td><td class="num">'+esc(e.ip)+'</td><td>'+esc(e.event)+'</td><td>'+ok+'</td></tr>');});
   document.getElementById('logmodal').style.display='flex';}catch(e){}}
-async function init(){try{await api('/api/whoami');loadSessions();}catch(e){}}
+async function init(){
+  try{const b=await(await fetch('/api/branding')).json();const nm=b.lab_name||'Lab';if($('labname'))$('labname').textContent=nm;if($('loginlab'))$('loginlab').textContent=nm;}catch(e){}
+  try{await api('/api/whoami');$('overlay').style.display='none';loadSessions();}catch(e){/* api() shows the overlay/landing on 401 */}
+}
 init();
 </script>
 </body>

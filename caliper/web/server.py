@@ -37,13 +37,35 @@ HERE = os.path.dirname(__file__)
 DATA_ROOT = os.path.realpath(os.environ.get("CALIPER_DATA_ROOT", os.getcwd()))
 WORKSPACE = os.path.realpath(get_workspace() or os.path.join(os.getcwd(), "caliper_workspace"))
 PACK = os.environ.get("CALIPER_PACK", "bio")
-_SESSIONS = set()           # auth tokens
+_SESSIONS: dict = {}        # token -> email (who is logged in)
 _HISTORY: dict = {}         # session_id -> {"title":..., "ts":..., "messages":[...]}
-ACCESS_LOG = deque(maxlen=1000)   # recent login events {ts, ip, event, ok}
-_FAILS: dict = {}           # ip -> [count, last_ts]   (brute-force lockout)
+ACCESS_LOG = deque(maxlen=1000)   # recent login events {ts, ip, email, event, ok}
+_FAILS: dict = {}           # ip -> (count, last_ts)   (brute-force lockout)
 _LOCK_AFTER, _LOCK_WINDOW = 5, 300   # >=5 fails within 300s -> locked for 300s
 
+LAB_NAME = os.environ.get("CALIPER_LAB_NAME", "Chong's Lab")
+try:
+    # CALIPER_USERS: JSON {email: password}. Use a DEDICATED app password per user —
+    # never anyone's institutional/UMN password.
+    _USERS = json.loads(os.environ.get("CALIPER_USERS", "") or "{}")
+except json.JSONDecodeError:
+    _USERS = {}
+_SINGLE_PW = os.environ.get("CALIPER_WEB_PASSWORD")  # legacy single-password fallback
+
 app = FastAPI(title="Caliper")
+
+
+def _auth_configured() -> bool:
+    return bool(_USERS or _SINGLE_PW)
+
+
+def _check_creds(email: str, password: str) -> bool:
+    if _USERS:
+        exp = _USERS.get((email or "").strip().lower())
+        return exp is not None and secrets.compare_digest(str(password), str(exp))
+    if _SINGLE_PW:
+        return secrets.compare_digest(str(password), _SINGLE_PW)
+    return False
 
 
 def client_ip(request: Request) -> str:
@@ -52,8 +74,8 @@ def client_ip(request: Request) -> str:
             or (request.client.host if request.client else "?"))
 
 
-def log_access(ip: str, event: str, ok: bool):
-    entry = {"ts": int(time.time()), "ip": ip, "event": event, "ok": ok}
+def log_access(ip: str, event: str, ok: bool, email: str = ""):
+    entry = {"ts": int(time.time()), "ip": ip, "email": email, "event": event, "ok": ok}
     ACCESS_LOG.append(entry)
     try:
         with open(os.path.join(WORKSPACE, "access.log"), "a") as f:
@@ -69,9 +91,8 @@ def _locked(ip: str) -> bool:
 
 # --- auth ------------------------------------------------------------------------
 def require_auth(request: Request):
-    pw = os.environ.get("CALIPER_WEB_PASSWORD")
-    if not pw:
-        return  # dev-open (use Cloudflare Access / a password in production)
+    if not _auth_configured():
+        return  # dev-open
     if request.cookies.get("caliper_session") not in _SESSIONS:
         raise HTTPException(status_code=401, detail="login required")
 
@@ -83,20 +104,25 @@ async def login(request: Request):
         log_access(ip, "login-locked", False)
         return JSONResponse({"ok": False, "error": "too many attempts; try later"}, status_code=429)
     body = await request.json()
-    pw = os.environ.get("CALIPER_WEB_PASSWORD")
-    if pw and secrets.compare_digest(str(body.get("password", "")), pw):
+    email = (body.get("email") or "").strip().lower()
+    if _check_creds(email, body.get("password", "")):
         tok = secrets.token_urlsafe(24)
-        _SESSIONS.add(tok)
+        _SESSIONS[tok] = email or "user"
         _FAILS.pop(ip, None)
-        log_access(ip, "login", True)
+        log_access(ip, "login", True, email)
         secure = request.headers.get("x-forwarded-proto", "http") == "https"
         r = JSONResponse({"ok": True})
         r.set_cookie("caliper_session", tok, httponly=True, samesite="lax", secure=secure)
         return r
     cnt, _ = _FAILS.get(ip, (0, 0))
     _FAILS[ip] = (cnt + 1, time.time())
-    log_access(ip, "login", False)
+    log_access(ip, "login", False, email)
     return JSONResponse({"ok": False}, status_code=401)
+
+
+@app.get("/api/branding")
+def branding():
+    return {"lab_name": LAB_NAME, "auth": _auth_configured()}
 
 
 @app.get("/api/access-log")
@@ -105,9 +131,10 @@ def access_log(_=Depends(require_auth)):
 
 
 @app.get("/api/whoami")
-def whoami(_=Depends(require_auth)):
-    return {"data_root": DATA_ROOT, "pack": PACK,
-            "auth_required": bool(os.environ.get("CALIPER_WEB_PASSWORD"))}
+def whoami(request: Request, _=Depends(require_auth)):
+    email = _SESSIONS.get(request.cookies.get("caliper_session"), "")
+    return {"data_root": DATA_ROOT, "pack": PACK, "lab_name": LAB_NAME,
+            "email": email, "auth_required": _auth_configured()}
 
 
 # --- read-only data browser/search (confined to DATA_ROOT) -----------------------
