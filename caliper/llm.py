@@ -6,11 +6,30 @@ detail. Supported providers: "anthropic" (default), "openai", "mock" (offline).
 from __future__ import annotations
 
 import os
+import time
 from typing import Optional
 
 from .config import DEFAULT_PROVIDER, PROVIDER_DEFAULT_MODEL
 
 _DEFAULT_SYSTEM = "You are Caliper, a careful scientific analysis planner."
+
+# Transient-error markers; retry these with exponential backoff (pattern per AgentLab).
+_TRANSIENT = ("rate", "overloaded", "timeout", "timed out", "connection",
+              "500", "502", "503", "529", "temporar")
+
+
+def _retry(fn, retries: int = 2, base: float = 0.7):
+    last = None
+    for attempt in range(retries + 1):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            last = e
+            if attempt < retries and any(t in str(e).lower() for t in _TRANSIENT):
+                time.sleep(base * (2 ** attempt))
+                continue
+            raise
+    raise last  # pragma: no cover
 
 
 class BaseLLM:
@@ -43,13 +62,16 @@ class AnthropicLLM(BaseLLM):
 
     def complete(self, prompt: str, system: Optional[str] = None) -> str:
         self._ensure()
-        msg = self._client.messages.create(
-            model=self.model, max_tokens=self.max_tokens,
-            system=system or _DEFAULT_SYSTEM,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return "".join(getattr(b, "text", "") for b in msg.content
-                       if getattr(b, "type", None) == "text")
+
+        def _do():
+            msg = self._client.messages.create(
+                model=self.model, max_tokens=self.max_tokens,
+                system=system or _DEFAULT_SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return "".join(getattr(b, "text", "") for b in msg.content
+                           if getattr(b, "type", None) == "text")
+        return _retry(_do)
 
 
 class OpenAILLM(BaseLLM):
@@ -76,16 +98,19 @@ class OpenAILLM(BaseLLM):
         self._ensure()
         messages = [{"role": "system", "content": system or _DEFAULT_SYSTEM},
                     {"role": "user", "content": prompt}]
-        try:
-            resp = self._client.chat.completions.create(
-                model=self.model, max_tokens=self.max_tokens, messages=messages)
-        except Exception as e:  # GPT-5+ require max_completion_tokens (TypeError or 400)
-            if "max_completion_tokens" in str(e) or "max_tokens" in str(e):
+
+        def _do():
+            try:
                 resp = self._client.chat.completions.create(
-                    model=self.model, max_completion_tokens=self.max_tokens, messages=messages)
-            else:
-                raise
-        return resp.choices[0].message.content or ""
+                    model=self.model, max_tokens=self.max_tokens, messages=messages)
+            except Exception as e:  # GPT-5+ require max_completion_tokens (TypeError or 400)
+                if "max_completion_tokens" in str(e) or "max_tokens" in str(e):
+                    resp = self._client.chat.completions.create(
+                        model=self.model, max_completion_tokens=self.max_tokens, messages=messages)
+                else:
+                    raise
+            return resp.choices[0].message.content or ""
+        return _retry(_do)
 
 
 # --- Offline deterministic stand-in -------------------------------------------------

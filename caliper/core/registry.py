@@ -54,6 +54,17 @@ class Pack:
     def tool_names(self) -> List[str]:
         return [t.name for t in self.tools]
 
+    def install_command(self, name: str) -> Optional[str]:
+        """The vetted install command for a pack tool, or None.
+
+        This is the allow-list for safe self-provisioning: the agent may install a
+        tool ONLY if it is in the pack (and only its registry-vetted command).
+        """
+        for t in self.tools:
+            if t.name == name:
+                return t.install or None
+        return None
+
 
 def load_pack(name: str, path: Optional[str] = None) -> Pack:
     """Load a pack by name (caliper/packs/<name>/pack.yaml) or explicit path."""
