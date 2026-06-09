@@ -30,6 +30,7 @@ from ..core.agent import CaliperAgent
 from ..core.executor import Executor
 from ..core.remote_executor import RemoteExecutor
 from ..core.registry import load_pack
+from ..core import logstore
 from ..config import get_workspace
 from ..llm import make_llm
 from ..trust.judge import Judge
@@ -52,6 +53,11 @@ try:
 except json.JSONDecodeError:
     _USERS = {}
 _SINGLE_PW = os.environ.get("CALIPER_WEB_PASSWORD")  # legacy single-password fallback
+
+try:  # restore chat history from disk (no DB; survives restarts)
+    _HISTORY.update(logstore.load_sessions(WORKSPACE))
+except Exception:  # noqa: BLE001
+    pass
 
 app = FastAPI(title="Caliper")
 
@@ -199,6 +205,24 @@ def _build_agent() -> CaliperAgent:
 _AGENT = None
 
 
+def _persist(sid: str, sess: dict, events: list):
+    """Save chat history + experience to files (EC2), and mirror to the lab server."""
+    try:
+        logstore.save_session(WORKSPACE, sid, sess)
+        exps = [e for e in events if e.get("type") == "experience"]
+        for e in exps:
+            logstore.append_experience(WORKSPACE, {"session": sid, **e})
+        ex = agent().executor
+        if isinstance(ex, RemoteExecutor):
+            ex.write_workspace_file(f"sessions/{sid}.log", logstore.session_as_jsonl(sess))
+            if exps:
+                ex.write_workspace_file("experience/log.jsonl",
+                                        "".join(json.dumps({"session": sid, **e}) + "\n" for e in exps),
+                                        append=True)
+    except Exception:  # noqa: BLE001  -- logging must never break a chat
+        pass
+
+
 def agent():
     global _AGENT
     if _AGENT is None:
@@ -229,6 +253,7 @@ async def chat(request: Request, _=Depends(require_auth)):
             sess["messages"].append({"role": "assistant", "events": events,
                                      "answer": result.answer, "trust": result.trust,
                                      "decision": result.decision})
+            _persist(sid, sess, events)
         except Exception as e:  # noqa: BLE001
             q.put({"type": "error", "message": f"{type(e).__name__}: {e}"})
         finally:

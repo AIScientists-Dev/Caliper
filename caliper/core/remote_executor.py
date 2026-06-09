@@ -111,6 +111,20 @@ class RemoteExecutor:
         finally:
             c.close()
 
+    def write_workspace_file(self, relpath: str, content: str, append: bool = False) -> None:
+        """Write a small log file under the remote workspace (mirrors EC2 logs to the lab)."""
+        c = self._connect()
+        try:
+            full = posixpath.join(self.workspace, relpath)
+            _, so, _ = c.exec_command("mkdir -p " + shlex.quote(posixpath.dirname(full)))
+            so.channel.recv_exit_status()
+            sftp = c.open_sftp()
+            with sftp.open(full, "a" if append else "w") as f:
+                f.write(content)
+            sftp.close()
+        finally:
+            c.close()
+
     def provision(self, install_cmd: str, on_output: Optional[Callable[[str], None]] = None) -> ExecResult:
         """Run a vetted install command (from the pack allow-list) on the remote host.
 

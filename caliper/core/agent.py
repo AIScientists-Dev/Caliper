@@ -61,7 +61,8 @@ class CaliperAgent:
                  executor: Optional[Executor] = None,
                  provenance: Optional[ProvenanceLog] = None,
                  feedback=None, alpha: float = 0.10, delta: float = 0.05,
-                 environment: Optional[str] = None, repair: bool = True):
+                 environment: Optional[str] = None, repair: bool = True,
+                 self_provision: bool = True):
         from ..trust.judge import Judge  # local import avoids cycle
         self.pack = pack
         self.llm = llm
@@ -77,6 +78,13 @@ class CaliperAgent:
         self.alpha = alpha
         self.delta = delta
         self.repair = repair
+        self.self_provision = self_provision
+
+    @staticmethod
+    def _looks_missing_tool(res) -> bool:
+        blob = (res.stdout + " " + res.stderr).lower()
+        return any(s in blob for s in ("command not found", "no module named",
+                                       "not found", "no such file"))
 
     def _plan_prompt(self, task: str, data_files: List[dict]) -> str:
         files = "\n".join(f"  - {f.get('label', '?')}: {f['path']}" for f in data_files)
@@ -122,10 +130,24 @@ class CaliperAgent:
               "tools": [s.tool for s in steps]})
 
         stdout, answer = "", {}
+        provisioned = set()
+        stream = lambda c: emit({"type": "stdout", "text": c[-800:]})
         for st in steps:
             emit({"type": "step", "tool": st.tool, "rationale": st.rationale})
-            res = self.executor.run(st.code, inputs=data_files,
-                                    on_output=lambda c: emit({"type": "stdout", "text": c[-800:]}))
+            res = self.executor.run(st.code, inputs=data_files, on_output=stream)
+            # self-evolve: if a needed pack tool is missing, install it (allow-listed) and retry once
+            if (self.self_provision and not res.ok and not getattr(res, "blocked", False)
+                    and self._looks_missing_tool(res) and st.tool not in provisioned
+                    and hasattr(self.executor, "provision")):
+                cmd = self.pack.install_command(st.tool)
+                if cmd:
+                    provisioned.add(st.tool)
+                    emit({"type": "provision", "tool": st.tool, "cmd": cmd})
+                    pres = self.executor.provision(cmd)
+                    emit({"type": "experience", "tool": st.tool, "action": "install",
+                          "ok": pres.ok, "error": (res.stderr or res.stdout)[-300:]})
+                    if pres.ok:
+                        res = self.executor.run(st.code, inputs=data_files, on_output=stream)
             stdout += res.stdout
             if res.stderr:
                 stdout += f"\n[stderr] {res.stderr}"

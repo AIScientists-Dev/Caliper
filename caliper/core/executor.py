@@ -144,3 +144,16 @@ class Executor:
         if on_output and proc.stdout:
             on_output(proc.stdout)
         return ExecResult(proc.returncode == 0, proc.stdout, proc.stderr, proc.returncode)
+
+    def provision(self, install_cmd: str, on_output=None) -> ExecResult:
+        """Run a vetted install command (from the pack allow-list) in the workspace."""
+        os.makedirs(self.workspace, exist_ok=True)
+        try:
+            proc = subprocess.run(install_cmd, shell=True, cwd=self.workspace,
+                                  env=dict(os.environ), capture_output=True, text=True,
+                                  timeout=self.timeout)
+        except subprocess.TimeoutExpired as e:
+            return ExecResult(False, e.stdout or "", "timeout", -1)
+        if on_output and proc.stdout:
+            on_output(proc.stdout)
+        return ExecResult(proc.returncode == 0, proc.stdout, proc.stderr, proc.returncode)
