@@ -235,7 +235,8 @@ const esc=s=>(s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;'
 const scroll=()=>{$('chat').scrollTop=$('chat').scrollHeight};
 function el(cls,html){const d=document.createElement('div');if(cls)d.className=cls;if(html!=null)d.innerHTML=html;return d;}
 
-async function api(u,o){const r=await fetch(u,o);if(r.status===401){$('overlay').style.display='flex';throw new Error('auth');}return r;}
+function showSignin(){$('connect').style.display='none';$('signin').style.display='block';$('overlay').style.display='flex';if($('pw'))$('pw').value='';}
+async function api(u,o){const r=await fetch(u,o);if(r.status===401){showSignin();throw new Error('auth');}return r;}
 async function doLogin(){
   const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value,password:$('pw').value})});
   if(r.ok){ await showConnect(); } else $('loginerr').textContent='Incorrect email or password.';
