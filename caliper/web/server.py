@@ -192,7 +192,8 @@ def _build_agent() -> CaliperAgent:
             user=os.environ.get("CALIPER_REMOTE_USER", "guest"),
             key_filename=os.environ.get("CALIPER_REMOTE_KEY") or None,
             password=os.environ.get("CALIPER_REMOTE_PASSWORD") or None,
-            workspace=os.environ.get("CALIPER_WORKSPACE", "."),
+            workspace=os.environ.get("CALIPER_REMOTE_WORKSPACE")
+                      or os.environ.get("CALIPER_WORKSPACE", "."),
             python=os.environ.get("CALIPER_REMOTE_PYTHON", "python3"),
             path_prepend=os.environ.get("CALIPER_REMOTE_PATH", ""),
             bwrap=os.environ.get("CALIPER_REMOTE_BWRAP", ""),
