@@ -93,6 +93,38 @@ llm = make_llm("openai")                       # OpenAI
 llm = make_llm("openai", model="gpt-5-chat-latest")
 ```
 
+## Deployment — where it runs
+
+Caliper deploys as two cooperating tiers, so **your data never leaves your own machines**:
+
+- **A control host** — a small, always-on server (a VM in your private network / VPC, or
+  any low-cost cloud instance). It serves the web app, runs the agent and the trust layer,
+  handles login + audit, and keeps chat history. It stays light — it holds **no large data**.
+- **Your private analysis server** — where the raw data and the field's tools already live
+  (on-prem or in your VPC). The control host connects to it over a secure connection and
+  runs **each analysis step there**, inside a confined working directory.
+
+```
+   Browser ──HTTPS──▶  Control host  (web · agent · trust · login + audit)
+                            │   per step: secure connection
+                            ▼
+                     Your private server   (data + tools)
+                     • runs each step in a confined workspace
+                     • raw data stays here — only small results return
+```
+
+In practice:
+- Users reach it at **a domain you control, over HTTPS, behind a login** (per-user email +
+  password; every sign-in is audited — who, when, and source IP).
+- Every analysis step is **workspace-confined**: it writes only to a dedicated directory and
+  reads your data read-only.
+- **Large data never leaves your server** — only small results and logs flow back.
+- History and the experience log are kept as **files on both tiers — no database required**.
+
+**To deploy:** point a control host at your private server (its address + an account), set
+your model provider's API key and a login, and expose a domain over HTTPS. The control host
+is intentionally tiny; all heavy compute runs on your server, next to the data.
+
 ## Status & roadmap
 
 **Research preview.** Working: thin core, `bio` pack, calibrated gate (tested),
