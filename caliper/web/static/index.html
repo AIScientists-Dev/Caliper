@@ -68,6 +68,16 @@
   .meter > i{display:block;height:100%;background:linear-gradient(90deg,#c0735a,#e6b765,#0e8f57)}
   details.raw{margin-top:8px} details.raw summary{font-size:12px;color:var(--faint);cursor:pointer}
   details.raw pre{background:#0a0f0d;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:11.5px;color:#bfe;overflow:auto}
+  .answer{font-size:14.5px;line-height:1.62;color:var(--text)}
+  .answer h3{font-size:16px;margin:12px 0 6px} .answer h4{font-size:14px;margin:10px 0 4px}
+  .answer ul{margin:6px 0 6px 18px} .answer li{margin:3px 0} .answer p{margin:7px 0}
+  .answer code{background:#0a0f0d;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12.5px}
+  .review{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+  .review .q{color:var(--text);margin-bottom:9px}
+  .fbtns{display:flex;gap:8px}
+  .fb{border:1px solid var(--line2);background:var(--panel2);color:var(--text);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px}
+  .fb:hover{border-color:var(--mint)} .fb.no:hover{border-color:var(--red)}
+  .stdout{background:#0a0f0d;border:1px solid var(--line);border-radius:6px;padding:8px;font-size:11px;color:#9fddcc;max-height:150px;overflow:auto;white-space:pre-wrap;margin-top:6px;font-family:ui-monospace,monospace}
 
   /* input */
   #inputbar{padding:12px 20px 20px;background:linear-gradient(180deg,transparent,var(--bg) 30%)}
@@ -223,24 +233,47 @@ async function send(){
 }
 function mk(role,label,html,user){const m=el('msg'+(user?' user':''));m.appendChild(el('role','<div class="ava '+(user?'u':'c')+'">'+(user?'Y':'⟡')+'</div>'+label));const b=el('body');b.innerHTML=html||'';m.appendChild(b);return m;}
 
+function mdToHtml(md){
+  let s=esc(md);
+  s=s.replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^#{1,2} (.*)$/gm,'<h3>$1</h3>');
+  s=s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>');
+  s=s.replace(/(?:^|\n)((?:- .*(?:\n|$))+)/g,m=>'<ul>'+m.trim().split(/\n/).map(l=>'<li>'+l.replace(/^- /,'')+'</li>').join('')+'</ul>');
+  return s.split(/\n{2,}/).map(b=>/^\s*<(h3|h4|ul)/.test(b)?b:'<p>'+b.replace(/\n/g,'<br>')+'</p>').join('');
+}
+async function sendFeedback(row,correct,trust){
+  try{await api('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({correct:correct,trust:trust,session_id:SID})});}catch(err){}
+  row.innerHTML='<span style="color:var(--mint)">✓ Thanks — recorded. Caliper uses this to learn when it can answer on its own and when to ask you.</span>';
+}
 function handle(e,evs,resultHost,sum,det){
   if(e.type==='session'){SID=e.session_id;}
+  else if(e.type==='status'){sum.innerHTML='<span class="spinner"></span> '+esc(e.text);evs.appendChild(el('ev','<span style="color:var(--faint)">• '+esc(e.text)+'</span>'));}
   else if(e.type==='plan'){evs.appendChild(el('ev plan','<b>Plan:</b> '+esc(e.summary)+(e.tools&&e.tools.length?' &middot; <span style="color:var(--faint)">'+esc(e.tools.join(', '))+'</span>':'')));}
-  else if(e.type==='step'){evs.appendChild(el('ev','▸ <b>'+esc(e.tool)+'</b> — '+esc(e.rationale)));}
-  else if(e.type==='exec'){const ev=el('ev',e.blocked?'⛔ blocked by safety policy':(e.ok?'✓ ran successfully':'✗ step error'));if(e.stdout_tail){const p=document.createElement('pre');p.textContent=e.stdout_tail;ev.appendChild(p);}evs.appendChild(ev);}
+  else if(e.type==='step'){evs.appendChild(el('ev','▸ <b>'+esc(e.tool)+'</b> — '+esc(e.rationale)));evs._live=null;}
+  else if(e.type==='stdout'){let c=evs._live;if(!c){c=el('stdout');evs.appendChild(c);evs._live=c;}c.textContent=e.text;c.scrollTop=c.scrollHeight;}
+  else if(e.type==='provision'){evs.appendChild(el('ev','<span style="color:var(--amber)">⚙ installing <b>'+esc(e.tool)+'</b> (self-evolve)…</span>'));}
+  else if(e.type==='experience'){evs.appendChild(el('ev','<span style="color:var(--faint)">'+(e.ok?'✓ installed '+esc(e.tool):'could not install '+esc(e.tool))+'</span>'));}
+  else if(e.type==='exec'){evs._live=null;evs.appendChild(el('ev',e.blocked?'⛔ blocked by safety policy':(e.ok?'✓ ran successfully':'✗ step finished with a warning')));}
   else if(e.type==='trust'){resultHost._trust=e.trust;}
+  else if(e.type==='answer'){let a=resultHost.querySelector('.answer');if(!a){a=el('answer');resultHost.appendChild(a);}a.innerHTML=mdToHtml(e.markdown);resultHost._answered=true;}
   else if(e.type==='decision'){
-    sum.innerHTML='✓ Done — Caliper '+(e.accepted?'is confident':'recommends review');
-    det.open=false;
-    const cls=e.accepted?'accept':'escalate';
-    const card=el('result');
-    card.appendChild(el('head','<div class="stat"><b>'+((e.answer&&e.answer.n_de)??'')+'</b> '+(e.answer&&'n_de'in e.answer?'differentially-expressed genes':'result')+'</div><span class="pill '+cls+'">'+(e.accepted?'AUTO-ACCEPT':'NEEDS REVIEW')+'</span>'));
-    const inner=el('');inner.innerHTML=renderAnswer(e.answer||{});card.appendChild(inner);
+    sum.innerHTML='Done · '+(det._steps||0)+' step(s) · click to see how it worked';det.open=false;
+    if(!resultHost._answered){const a=el('answer');a.innerHTML=e.answer_text?mdToHtml(e.answer_text):renderAnswer(e.answer||{})||'<i style="color:var(--mut)">No answer was produced.</i>';resultHost.appendChild(a);}
+    const struct=renderAnswer(e.answer||{});if(struct){const inner=el('');inner.innerHTML=struct;resultHost.appendChild(inner);}
     const tr=(resultHost._trust!=null)?resultHost._trust:0;
-    card.appendChild(el('trust','trust&nbsp;<div class="meter"><i style="width:'+Math.round(tr*100)+'%"></i></div>&nbsp;<b style="color:var(--text)">'+tr.toFixed(2)+'</b>'));
-    resultHost.appendChild(card);
+    resultHost.appendChild(el('trust','confidence&nbsp;<div class="meter"><i style="width:'+Math.round(tr*100)+'%"></i></div>&nbsp;<b style="color:var(--text)">'+tr.toFixed(2)+'</b>'));
+    const rev=el('review');
+    const q=e.accepted
+      ? 'Caliper is confident enough to stand behind this on its own. Was it right?'
+      : (e.calibrated
+          ? "This is below the confidence bar you set, so Caliper is asking before you rely on it — does it look right?"
+          : "Caliper can't certify this yet (it hasn't learned your standards). Please confirm — does it look right?");
+    rev.appendChild(el('q',esc(q)));
+    const btns=el('fbtns');const yes=el('fb','👍 Looks right');const no=el('fb no','👎 Not right');
+    yes.onclick=()=>sendFeedback(rev,true,tr);no.onclick=()=>sendFeedback(rev,false,tr);
+    btns.appendChild(yes);btns.appendChild(no);rev.appendChild(btns);resultHost.appendChild(rev);
   }
   else if(e.type==='error'){evs.appendChild(el('ev','<span style="color:var(--red)">error: '+esc(e.message)+'</span>'));}
+  if(e.type==='step'){det._steps=(det._steps||0)+1;}
   scroll();
 }
 

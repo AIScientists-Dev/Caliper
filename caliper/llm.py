@@ -176,6 +176,9 @@ class MockLLM(BaseLLM):
             return _MOCK_PLAN
         if "RESPOND_WITH: trust_json" in prompt:
             return _MOCK_TRUST
+        if "RESPOND_WITH: answer_md" in prompt:
+            return ("**7 genes** stand out as differentially expressed — MYC, CDKN2A and "
+                    "EGFR are the most strongly up-regulated. See the table and figure below.")
         return "{}"
 
 

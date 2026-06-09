@@ -16,24 +16,35 @@ from .provenance import ProvenanceLog
 from .registry import Pack
 
 PLAN_SYSTEM = (
-    "You are Caliper, a careful scientific analysis planner. Given a task, the input "
-    "data files, and a catalogue of available tools, produce a concrete, reproducible "
-    "plan. Prefer the catalogue's tools where they are installed. Each step must include "
-    "runnable Python `code` that reads inputs from the JSON in env var CALIPER_INPUTS (a "
-    "list of {'path','label'}), performs the step, and prints its result on a single line "
-    "beginning with `CALIPER_RESULT:` immediately followed by compact JSON. Do not invent "
-    "file paths. Write all outputs and temp files to the current working directory (the "
-    "confined workspace); input files are READ-ONLY — never modify or delete them."
+    "You are Caliper, a careful data analyst working on a private server. Read the user's "
+    "request and do EXACTLY what is asked — it is NOT always a genomics or differential-"
+    "expression task; it may be a question about what data exists, a summary, or any "
+    "analysis. Make a short plan with runnable Python step(s) that INSPECT the data or run "
+    "the requested work. To explore, list and summarize files under the data root with "
+    "os/glob/pandas (READ-ONLY) and print what you find. A step may print plain text; for a "
+    "structured result or a figure, also print one line `CALIPER_RESULT:` followed by "
+    "compact JSON (optionally with a 'figures' list of PNG paths). You will write the final "
+    "plain-language answer AFTER the steps run, so steps should gather the facts you need. "
+    "Read inputs from env var CALIPER_INPUTS (a list of {'path','label'}). Do not invent "
+    "file paths. Write outputs/temp ONLY to the current working directory; input data is "
+    "READ-ONLY — never modify or delete it. If a task needs no code (pure conversation), "
+    "return an empty steps list."
 )
 
-# What the executor can actually run. Stating this prevents the planner from emitting
-# code that depends on tools that aren't present (e.g. reaching for R/DESeq2 via rpy2).
+# What the executor can actually run.
 DEFAULT_ENVIRONMENT = (
-    "Python 3 with numpy, pandas, scipy, and the standard library ONLY. R / rpy2 / "
-    "Bioconductor (incl. DESeq2/edgeR) and external CLI tools are NOT installed and will "
-    "fail to import. Do a pure-Python differential-expression analysis instead, and make "
-    "the FINAL step print CALIPER_RESULT with the differentially-expressed gene list "
-    "(fields: n_genes, n_de, and top = [{gene, log2fc, pvalue}])."
+    "Python 3 with numpy, pandas, scipy and the standard library. Field-specific CLI tools "
+    "may be on PATH (try them; a missing tool can be installed on demand). Prefer simple, "
+    "robust code. For exploration use os/glob/pandas to list and characterize files."
+)
+
+# Turns the raw step outputs into a clear answer for the user (the thing they read).
+ANSWER_SYSTEM = (
+    "You are Caliper, talking to a scientist who is not a programmer. Using their request "
+    "and the outputs of the steps you ran, write a clear, helpful answer in Markdown. Be "
+    "concrete and HONEST: if data was missing or a step failed, say so plainly and suggest "
+    "the next step. Never invent results, numbers, or file names that aren't in the outputs. "
+    "Keep it tight — lead with the answer, then the supporting detail."
 )
 
 
@@ -51,6 +62,7 @@ class CaliperResult:
     trust: float
     accepted: bool
     decision: str  # "auto-accept" | "escalate"
+    answer_text: str = ""  # the plain-language answer the user reads
     steps: List[Step] = field(default_factory=list)
     raw_stdout: str = ""
     provenance_path: Optional[str] = None
@@ -62,10 +74,11 @@ class CaliperAgent:
                  provenance: Optional[ProvenanceLog] = None,
                  feedback=None, alpha: float = 0.10, delta: float = 0.05,
                  environment: Optional[str] = None, repair: bool = True,
-                 self_provision: bool = True):
+                 self_provision: bool = True, data_root: str = ""):
         from ..trust.judge import Judge  # local import avoids cycle
         self.pack = pack
         self.llm = llm
+        self.data_root = data_root  # where the user's data lives (for exploration hints)
         self.environment = environment or DEFAULT_ENVIRONMENT
         self.judge = judge or Judge(llm)
         self.gate = gate  # CalibratedGate or None (uncalibrated => always escalate)
@@ -87,16 +100,30 @@ class CaliperAgent:
                                        "not found", "no such file"))
 
     def _plan_prompt(self, task: str, data_files: List[dict]) -> str:
-        files = "\n".join(f"  - {f.get('label', '?')}: {f['path']}" for f in data_files)
+        files = "\n".join(f"  - {f.get('label', '?')}: {f['path']}" for f in data_files) \
+            or "  (none selected — if the task needs data, explore the data root below)"
+        root = (f"# Data root on this server (explore READ-ONLY if no files were selected)\n"
+                f"{self.data_root}\n\n") if self.data_root else ""
         return (
             f"{self.pack.as_context()}\n\n"
             f"# Execution environment\n{self.environment}\n\n"
             f"# Task\n{task}\n\n"
             f"# Input data files\n{files}\n\n"
+            f"{root}"
             f"Return JSON: {{\"summary\": str, \"steps\": "
             f"[{{\"tool\": str, \"rationale\": str, \"code\": str}}]}}.\n"
             f"RESPOND_WITH: plan_json"
         )
+
+    def _synthesize(self, task: str, stdout: str) -> str:
+        """Turn the step outputs into the plain-language answer the user reads."""
+        prompt = (f"# The user asked\n{task}\n\n"
+                  f"# Outputs from the steps you ran\n{stdout[-6000:] or '(no output)'}\n\n"
+                  f"Write the answer for the user now.\nRESPOND_WITH: answer_md")
+        try:
+            return self.llm.complete(prompt, system=ANSWER_SYSTEM).strip()
+        except Exception:  # noqa: BLE001  -- never let synthesis break the run
+            return ""
 
     def _repair(self, task: str, data_files: List[dict], stdout: str):
         """Single corrective attempt: re-prompt with the failure, get one fixed step."""
@@ -122,6 +149,7 @@ class CaliperAgent:
 
     def run(self, task: str, data_files: List[dict], on_event=None) -> CaliperResult:
         emit = on_event or (lambda e: None)
+        emit({"type": "status", "text": "Planning the analysis…"})
         plan = extract_json(self.llm.complete(self._plan_prompt(task, data_files),
                                               system=PLAN_SYSTEM))
         steps = [Step(tool=s.get("tool", "?"), rationale=s.get("rationale", ""),
@@ -169,16 +197,24 @@ class CaliperAgent:
                 if parsed is not None:
                     answer = parsed
 
-        trust = self.judge.score(task, steps, answer, stdout)
+        emit({"type": "status", "text": "Writing the answer…"})
+        answer_text = self._synthesize(task, stdout)
+        if answer_text:
+            emit({"type": "answer", "markdown": answer_text})
+
+        emit({"type": "status", "text": "Checking how much to trust it…"})
+        trust = self.judge.score(task, steps, answer_text or answer, stdout)
         emit({"type": "trust", "trust": trust})
         if self.feedback is not None and len(self.feedback) > 0:
             self.gate = self.feedback.recalibrate(self.alpha, self.delta)
         accepted = bool(self.gate and self.gate.decide(trust).accept)
         decision = "auto-accept" if accepted else "escalate"
-        emit({"type": "decision", "decision": decision, "accepted": accepted, "answer": answer})
+        emit({"type": "decision", "decision": decision, "accepted": accepted,
+              "answer": answer, "answer_text": answer_text,
+              "calibrated": self.feedback is not None and len(self.feedback) > 0})
 
         result = CaliperResult(task=task, answer=answer, trust=trust,
                                accepted=accepted, decision=decision,
-                               steps=steps, raw_stdout=stdout)
+                               answer_text=answer_text, steps=steps, raw_stdout=stdout)
         result.provenance_path = self.provenance.record(result, self.pack.name)
         return result

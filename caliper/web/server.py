@@ -199,9 +199,16 @@ def _build_agent() -> CaliperAgent:
             path_prepend=os.environ.get("CALIPER_REMOTE_PATH", ""),
             bwrap=os.environ.get("CALIPER_REMOTE_BWRAP", ""),
         )
+        # the lab data lives next to (the parent of) the remote workspace by default
+        data_root = (os.environ.get("CALIPER_REMOTE_DATA_ROOT")
+                     or os.path.dirname(ex.workspace.rstrip("/")) or ex.workspace)
     else:
         ex = Executor()
-    return CaliperAgent(pack=pack, llm=llm, judge=Judge(llm), executor=ex)
+        data_root = DATA_ROOT
+    from ..trust.feedback import FeedbackStore
+    feedback = FeedbackStore(os.path.join(WORKSPACE, "feedback.jsonl"))
+    return CaliperAgent(pack=pack, llm=llm, judge=Judge(llm), executor=ex,
+                        feedback=feedback, data_root=data_root)
 
 
 _AGENT = None
@@ -304,6 +311,18 @@ def delete_session(sid: str, _=Depends(require_auth)):
     _HISTORY.pop(sid, None)
     logstore.delete_session(WORKSPACE, sid)
     return {"ok": True}
+
+
+@app.post("/api/feedback")
+async def feedback(request: Request, _=Depends(require_auth)):
+    """The mutualistic loop: a 👍/👎 on a result teaches the trust gate."""
+    body = await request.json()
+    try:
+        agent().feedback.add(float(body.get("trust", 0.0)), bool(body.get("correct")),
+                             meta={"session": body.get("session_id")})
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "n_feedback": len(agent().feedback)}
 
 
 # --- frontend --------------------------------------------------------------------
