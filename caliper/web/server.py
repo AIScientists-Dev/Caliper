@@ -24,7 +24,8 @@ from collections import deque
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, Response,
+                               StreamingResponse)
 
 from ..core.agent import CaliperAgent
 from ..core.executor import Executor
@@ -56,6 +57,39 @@ _SINGLE_PW = os.environ.get("CALIPER_WEB_PASSWORD")  # legacy single-password fa
 
 try:  # restore chat history from disk (no DB; survives restarts)
     _HISTORY.update(logstore.load_sessions(WORKSPACE))
+except Exception:  # noqa: BLE001
+    pass
+
+# Where the lab's data lives (for the remote data browser); next to the remote workspace.
+REMOTE_DATA_ROOT = (os.environ.get("CALIPER_REMOTE_DATA_ROOT")
+                    or (os.path.dirname(os.environ["CALIPER_REMOTE_WORKSPACE"].rstrip("/"))
+                        if os.environ.get("CALIPER_REMOTE_WORKSPACE") else ""))
+
+_JOBS: dict = {}   # job_id -> {task, session, finalized, final}  (durable: survives restart)
+
+
+def _jobs_dir():
+    return os.path.join(WORKSPACE, ".jobs")
+
+
+def _save_job(jid):
+    try:
+        os.makedirs(_jobs_dir(), exist_ok=True)
+        json.dump(_JOBS[jid], open(os.path.join(_jobs_dir(), jid + ".json"), "w"))
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _register_job(jid, task, sid):
+    _JOBS[jid] = {"task": task, "session": sid, "finalized": False, "final": None}
+    _save_job(jid)
+
+
+try:
+    if os.path.isdir(_jobs_dir()):
+        for _fn in os.listdir(_jobs_dir()):
+            if _fn.endswith(".json"):
+                _JOBS[_fn[:-5]] = json.load(open(os.path.join(_jobs_dir(), _fn)))
 except Exception:  # noqa: BLE001
     pass
 
@@ -155,6 +189,18 @@ def _safe(path: str) -> str:
 
 @app.get("/api/browse")
 def browse(path: str = "", _=Depends(require_auth)):
+    ex = agent().executor
+    if isinstance(ex, RemoteExecutor) and REMOTE_DATA_ROOT:  # browse the LAB filesystem
+        root = REMOTE_DATA_ROOT
+        full = os.path.normpath(os.path.join(root, path)) if path else root
+        if not (full == root or full.startswith(root + "/")):
+            full = root
+        try:
+            entries = ex.listdir(full)
+        except Exception:
+            raise HTTPException(status_code=404, detail="cannot list")
+        return {"path": "" if full == root else os.path.relpath(full, root),
+                "root": root, "entries": entries}
     p = _safe(path)
     if not os.path.isdir(p):
         raise HTTPException(status_code=404, detail="not a directory")
@@ -171,6 +217,10 @@ def browse(path: str = "", _=Depends(require_auth)):
 
 @app.get("/api/search")
 def search(q: str, _=Depends(require_auth), limit: int = 100):
+    ex = agent().executor
+    if isinstance(ex, RemoteExecutor) and REMOTE_DATA_ROOT:  # search the LAB filesystem
+        hits = [os.path.relpath(h, REMOTE_DATA_ROOT) for h in ex.find(REMOTE_DATA_ROOT, q, limit)]
+        return {"hits": hits, "truncated": len(hits) >= limit}
     q = q.lower()
     hits = []
     for root, dirs, files in os.walk(DATA_ROOT):
@@ -246,8 +296,12 @@ async def chat(request: Request, _=Depends(require_auth)):
     message = body.get("message", "")
     data_paths = body.get("data_paths", []) or []
     sid = body.get("session_id") or secrets.token_urlsafe(8)
-    data_files = [{"path": _safe(p) if not os.path.isabs(p) else p, "label": os.path.basename(p)}
-                  for p in data_paths]
+    _remote = isinstance(agent().executor, RemoteExecutor) and REMOTE_DATA_ROOT
+    def _resolve(p):
+        if os.path.isabs(p):
+            return p
+        return os.path.join(REMOTE_DATA_ROOT, p) if _remote else _safe(p)
+    data_files = [{"path": _resolve(p), "label": os.path.basename(p)} for p in data_paths]
 
     sess = _HISTORY.setdefault(sid, {"title": message[:60] or "New chat", "ts": int(time.time()),
                                      "messages": []})
@@ -258,10 +312,14 @@ async def chat(request: Request, _=Depends(require_auth)):
     def worker():
         events = []
         try:
-            result = agent().run(message, data_files, on_event=lambda e: (events.append(e), q.put(e)))
+            allow_jobs = isinstance(agent().executor, RemoteExecutor)
+            result = agent().run(message, data_files, allow_jobs=allow_jobs,
+                                 on_event=lambda e: (events.append(e), q.put(e)))
             sess["messages"].append({"role": "assistant", "events": events,
                                      "answer": result.answer, "trust": result.trust,
                                      "decision": result.decision})
+            if result.decision == "job" and result.provenance_path:
+                _register_job(result.provenance_path, message, sid)  # long job -> poll to finish
             _persist(sid, sess, events)
         except Exception as e:  # noqa: BLE001
             q.put({"type": "error", "message": f"{type(e).__name__}: {e}"})
@@ -282,9 +340,40 @@ async def chat(request: Request, _=Depends(require_auth)):
     return StreamingResponse(gen(), media_type="text/event-stream")
 
 
+@app.get("/api/job/{jid}")
+def job_poll(jid: str, _=Depends(require_auth)):
+    """Poll a detached job: state/progress/eta + log tail; finalizes the answer on done."""
+    ex = agent().executor
+    if not hasattr(ex, "job_status"):
+        raise HTTPException(status_code=404)
+    st = ex.job_status(jid)
+    meta = _JOBS.get(jid)
+    if meta and not meta.get("finalized") and st.get("state") in ("done", "failed"):
+        res = agent().finalize(meta["task"], st.get("log_tail", ""), st.get("result"))
+        meta["final"] = {"answer_text": res.answer_text, "answer": res.answer,
+                         "trust": res.trust, "accepted": res.accepted, "decision": res.decision,
+                         "calibrated": agent().feedback is not None and len(agent().feedback) > 0}
+        meta["finalized"] = True
+        _save_job(jid)
+    if meta and meta.get("final"):
+        st.update(meta["final"])
+    return st
+
+
 @app.get("/api/artifact")
 def artifact(path: str, _=Depends(require_auth)):
-    """Serve a figure/file produced by a run — confined to the workspace."""
+    """Serve a figure/file produced by a run — confined to the workspace (local or lab)."""
+    ex = agent().executor
+    if isinstance(ex, RemoteExecutor):  # figure lives on the lab; fetch it over SSH
+        rp = os.path.normpath(path)
+        if not rp.startswith(ex.workspace.rstrip("/") + "/"):
+            raise HTTPException(status_code=400, detail="outside workspace")
+        try:
+            data = ex.read_file(rp)
+        except Exception:
+            raise HTTPException(status_code=404)
+        media = "image/png" if rp.endswith(".png") else "application/octet-stream"
+        return Response(content=data, media_type=media)
     p = os.path.realpath(path)
     if p != WORKSPACE and not p.startswith(WORKSPACE + os.sep):
         raise HTTPException(status_code=400, detail="outside workspace")

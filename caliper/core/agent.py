@@ -28,7 +28,10 @@ PLAN_SYSTEM = (
     "Read inputs from env var CALIPER_INPUTS (a list of {'path','label'}). Do not invent "
     "file paths. Write outputs/temp ONLY to the current working directory; input data is "
     "READ-ONLY — never modify or delete it. If a task needs no code (pure conversation), "
-    "return an empty steps list."
+    "return an empty steps list. If a step will take more than ~2 minutes (large data, "
+    "alignment/quantification, long loops), set \"long\": true, estimate \"eta_seconds\", and "
+    "in that step's code print `CALIPER_PROGRESS:{\"frac\":0..1,\"eta\":sec}` periodically "
+    "(e.g. once per sample) so progress can be shown; emit such a long step as the single step."
 )
 
 # What the executor can actually run.
@@ -110,8 +113,8 @@ class CaliperAgent:
             f"# Task\n{task}\n\n"
             f"# Input data files\n{files}\n\n"
             f"{root}"
-            f"Return JSON: {{\"summary\": str, \"steps\": "
-            f"[{{\"tool\": str, \"rationale\": str, \"code\": str}}]}}.\n"
+            f"Return JSON: {{\"summary\": str, \"long\": bool, \"eta_seconds\": number, "
+            f"\"steps\": [{{\"tool\": str, \"rationale\": str, \"code\": str}}]}}.\n"
             f"RESPOND_WITH: plan_json"
         )
 
@@ -147,7 +150,8 @@ class CaliperAgent:
         return Step(tool=s.get("tool", "repair"), rationale=s.get("rationale", "repair retry"),
                     code=s.get("code", ""))
 
-    def run(self, task: str, data_files: List[dict], on_event=None) -> CaliperResult:
+    def run(self, task: str, data_files: List[dict], on_event=None,
+            allow_jobs: bool = False) -> CaliperResult:
         emit = on_event or (lambda e: None)
         emit({"type": "status", "text": "Planning the analysis…"})
         plan = extract_json(self.llm.complete(self._plan_prompt(task, data_files),
@@ -156,6 +160,20 @@ class CaliperAgent:
                       code=s.get("code", "")) for s in plan.get("steps", [])]
         emit({"type": "plan", "summary": plan.get("summary", ""),
               "tools": [s.tool for s in steps]})
+
+        # Long-running step -> dispatch DETACHED on the lab and hand off to polling, so
+        # the request doesn't block for hours. The brain finalizes via finalize() on done.
+        eta = plan.get("eta_seconds")
+        is_long = bool(plan.get("long")) or (isinstance(eta, (int, float)) and eta > 120)
+        if allow_jobs and is_long and steps and hasattr(self.executor, "launch_job"):
+            st = steps[0]
+            job = self.executor.launch_job(st.code, inputs=data_files, eta_seconds=eta)
+            emit({"type": "job", "job_id": job.get("job_id"), "eta_seconds": eta,
+                  "summary": plan.get("summary", ""), "tool": st.tool,
+                  "rationale": st.rationale})
+            return CaliperResult(task=task, answer={}, trust=0.0, accepted=False,
+                                 decision="job", steps=steps, raw_stdout="",
+                                 provenance_path=job.get("job_id"))
 
         stdout, answer = "", {}
         provisioned = set()
@@ -218,3 +236,17 @@ class CaliperAgent:
                                answer_text=answer_text, steps=steps, raw_stdout=stdout)
         result.provenance_path = self.provenance.record(result, self.pack.name)
         return result
+
+    def finalize(self, task: str, stdout: str, result: Optional[dict] = None) -> CaliperResult:
+        """Complete a detached job once it's done: synthesize the answer, score trust, decide."""
+        answer = result or parse_caliper_result(stdout) or {}
+        answer_text = self._synthesize(task, stdout)
+        trust = self.judge.score(task, [], answer_text or answer, stdout)
+        if self.feedback is not None and len(self.feedback) > 0:
+            self.gate = self.feedback.recalibrate(self.alpha, self.delta)
+        accepted = bool(self.gate and self.gate.decide(trust).accept)
+        res = CaliperResult(task=task, answer=answer, trust=trust, accepted=accepted,
+                            decision="auto-accept" if accepted else "escalate",
+                            answer_text=answer_text, raw_stdout=stdout)
+        res.provenance_path = self.provenance.record(res, self.pack.name)
+        return res

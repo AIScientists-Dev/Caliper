@@ -79,6 +79,12 @@
   .fb:hover{border-color:var(--mint)} .fb.no:hover{border-color:var(--red)}
   .fbnote{width:100%;background:#0a0f0d;border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:8px;font-size:13px;margin-bottom:8px;resize:vertical;font-family:inherit}
   .stdout{background:#0a0f0d;border:1px solid var(--line);border-radius:6px;padding:8px;font-size:11px;color:#9fddcc;max-height:150px;overflow:auto;white-space:pre-wrap;margin-top:6px;font-family:ui-monospace,monospace}
+  .jobcard{border:1px solid var(--line2);border-radius:12px;background:var(--panel);padding:16px;margin-top:4px}
+  .jobtitle{font-weight:600;font-size:14px;margin-bottom:12px}
+  .bar{height:9px;background:#0a0f0d;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint-d),var(--mint));transition:width .5s ease}
+  .jobmeta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin-top:9px}
+  .jobmeta .loglink{cursor:pointer;color:var(--faint)}
 
   /* input */
   #inputbar{padding:12px 20px 20px;background:linear-gradient(180deg,transparent,var(--bg) 30%)}
@@ -280,6 +286,47 @@ function sendFeedback(row,correct,trust){
   row.querySelector('.send').onclick=()=>post(note.value.trim());
   row.querySelector('.skip').onclick=()=>post('');
 }
+function renderFinal(host,d){
+  if(d.answer_text){let a=host.querySelector('.answer');if(!a){a=el('answer');host.appendChild(a);}a.innerHTML=mdToHtml(d.answer_text);}
+  else if(!host._answered){const a=el('answer');a.innerHTML=renderAnswer(d.answer||{})||'<i style="color:var(--mut)">No answer was produced.</i>';host.appendChild(a);}
+  const struct=renderAnswer(d.answer||{});if(struct){const inner=el('');inner.innerHTML=struct;host.appendChild(inner);}
+  const tr=d.trust||0;
+  host.appendChild(el('trust','confidence&nbsp;<div class="meter"><i style="width:'+Math.round(tr*100)+'%"></i></div>&nbsp;<b style="color:var(--text)">'+tr.toFixed(2)+'</b>'));
+  const rev=el('review');
+  const q=d.accepted
+    ? 'Caliper is confident enough to stand behind this on its own. Was it right?'
+    : (d.calibrated
+        ? "This is below the confidence bar you set, so Caliper is asking before you rely on it — does it look right?"
+        : "Caliper can't certify this yet (it hasn't learned your standards). Please confirm — does it look right?");
+  rev.appendChild(el('q',esc(q)));
+  const btns=el('fbtns');const yes=el('fb','👍 Looks right');const no=el('fb no','👎 Not right');
+  yes.onclick=()=>sendFeedback(rev,true,tr);no.onclick=()=>sendFeedback(rev,false,tr);
+  btns.appendChild(yes);btns.appendChild(no);rev.appendChild(btns);host.appendChild(rev);
+}
+function fmtDur(s){s=Math.max(0,Math.round(s));if(s<60)return s+'s';const m=Math.floor(s/60);if(m<60)return m+'m';return Math.floor(m/60)+'h '+(m%60)+'m';}
+async function pollJob(jid,card,host,eta0){
+  if(card._polling)return; card._polling=true;
+  const bar=card.querySelector('.bar > i'),jt=card.querySelector('.jt'),log=card.querySelector('.joblog'),title=card.querySelector('.jobtitle');
+  const t0=Date.now();
+  const tick=async()=>{
+    let st;
+    try{st=await(await api('/api/job/'+jid)).json();}catch(err){jt.textContent='connection lost — retrying';return void setTimeout(tick,5000);}
+    if(st.log_tail!=null&&st.log_tail!=='')log.textContent=st.log_tail;
+    if(st.state==='running'){
+      const frac=st.progress||0;bar.style.width=Math.max(3,Math.round(frac*100))+'%';
+      const elapsed=(Date.now()-t0)/1000;
+      let eta=(st.eta_seconds!=null)?st.eta_seconds:(frac>0.02?elapsed*(1-frac)/frac:eta0);
+      jt.textContent=(frac>0?Math.round(frac*100)+'% · ':'')+(eta!=null?'~'+fmtDur(eta)+' left':'estimating…');
+      setTimeout(tick,3000);
+    }else if(st.state==='done'||st.state==='failed'){
+      bar.style.width='100%';title.textContent=(st.state==='done'?'✓ ':'✗ ')+title.textContent.replace(/^[⟳✓✗]\s*/,'');
+      jt.textContent=st.state==='done'?'done':'failed';
+      renderFinal(host,{answer_text:st.answer_text,answer:st.answer,trust:st.trust||0,accepted:st.accepted,calibrated:st.calibrated});
+      scroll();
+    }else{jt.textContent='status: '+(st.state||'unknown');setTimeout(tick,4000);}
+  };
+  tick();
+}
 function handle(e,evs,resultHost,sum,det){
   if(e.type==='session'){SID=e.session_id;}
   else if(e.type==='status'){sum.innerHTML='<span class="spinner"></span> '+esc(e.text);evs.appendChild(el('ev','<span style="color:var(--faint)">• '+esc(e.text)+'</span>'));}
@@ -293,20 +340,19 @@ function handle(e,evs,resultHost,sum,det){
   else if(e.type==='answer'){let a=resultHost.querySelector('.answer');if(!a){a=el('answer');resultHost.appendChild(a);}a.innerHTML=mdToHtml(e.markdown);resultHost._answered=true;}
   else if(e.type==='decision'){
     sum.innerHTML='Done · '+(det._steps||0)+' step(s) · click to see how it worked';det.open=false;
-    if(!resultHost._answered){const a=el('answer');a.innerHTML=e.answer_text?mdToHtml(e.answer_text):renderAnswer(e.answer||{})||'<i style="color:var(--mut)">No answer was produced.</i>';resultHost.appendChild(a);}
-    const struct=renderAnswer(e.answer||{});if(struct){const inner=el('');inner.innerHTML=struct;resultHost.appendChild(inner);}
-    const tr=(resultHost._trust!=null)?resultHost._trust:0;
-    resultHost.appendChild(el('trust','confidence&nbsp;<div class="meter"><i style="width:'+Math.round(tr*100)+'%"></i></div>&nbsp;<b style="color:var(--text)">'+tr.toFixed(2)+'</b>'));
-    const rev=el('review');
-    const q=e.accepted
-      ? 'Caliper is confident enough to stand behind this on its own. Was it right?'
-      : (e.calibrated
-          ? "This is below the confidence bar you set, so Caliper is asking before you rely on it — does it look right?"
-          : "Caliper can't certify this yet (it hasn't learned your standards). Please confirm — does it look right?");
-    rev.appendChild(el('q',esc(q)));
-    const btns=el('fbtns');const yes=el('fb','👍 Looks right');const no=el('fb no','👎 Not right');
-    yes.onclick=()=>sendFeedback(rev,true,tr);no.onclick=()=>sendFeedback(rev,false,tr);
-    btns.appendChild(yes);btns.appendChild(no);rev.appendChild(btns);resultHost.appendChild(rev);
+    renderFinal(resultHost,{answer_text:e.answer_text,answer:e.answer,
+      trust:(resultHost._trust!=null?resultHost._trust:0),accepted:e.accepted,calibrated:e.calibrated});
+  }
+  else if(e.type==='job'){
+    sum.innerHTML='Dispatched to the lab — running in the background';det.open=false;
+    const card=el('jobcard');
+    card.innerHTML='<div class="jobtitle">⟳ '+esc(e.summary||e.tool||'Running on the lab server')+'</div>'
+      +'<div class="bar"><i style="width:0%"></i></div>'
+      +'<div class="jobmeta"><span class="jt">starting…</span><a class="loglink">▸ live log</a></div>'
+      +'<pre class="stdout joblog" style="display:none"></pre>';
+    resultHost.appendChild(card);
+    card.querySelector('.loglink').onclick=()=>{const l=card.querySelector('.joblog');l.style.display=l.style.display==='none'?'block':'none';};
+    pollJob(e.job_id,card,resultHost,e.eta_seconds);
   }
   else if(e.type==='error'){evs.appendChild(el('ev','<span style="color:var(--red)">error: '+esc(e.message)+'</span>'));}
   if(e.type==='step'){det._steps=(det._steps||0)+1;}

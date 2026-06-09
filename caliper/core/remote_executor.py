@@ -237,6 +237,39 @@ class RemoteExecutor:
             sftp.close()
         return st
 
+    # --- remote data browsing / figure fetch --------------------------------------
+    def listdir(self, path: str) -> List[dict]:
+        import stat as _stat
+        c = self._conn()
+        sftp = c.open_sftp()
+        try:
+            items = sftp.listdir_attr(path)
+        finally:
+            sftp.close()
+        out = []
+        for a in items:
+            if a.filename.startswith("."):
+                continue
+            isdir = _stat.S_ISDIR(a.st_mode)
+            out.append({"name": a.filename, "dir": isdir, "size": None if isdir else a.st_size})
+        return sorted(out, key=lambda e: (not e["dir"], e["name"].lower()))
+
+    def find(self, root: str, query: str, limit: int = 100) -> List[str]:
+        c = self._conn()
+        cmd = (f"find {shlex.quote(root)} -maxdepth 6 -type f -iname "
+               f"{shlex.quote('*' + query + '*')} 2>/dev/null | head -n {int(limit)}")
+        _, so, _ = c.exec_command(cmd)
+        return [l.strip() for l in so.read().decode(errors="replace").splitlines() if l.strip()]
+
+    def read_file(self, path: str) -> bytes:
+        c = self._conn()
+        sftp = c.open_sftp()
+        try:
+            with sftp.open(path) as f:
+                return f.read()
+        finally:
+            sftp.close()
+
     def write_workspace_file(self, relpath: str, content: str, append: bool = False) -> None:
         """Write a small log file under the remote workspace (mirrors EC2 logs to the lab)."""
         c = self._conn()
