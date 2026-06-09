@@ -1,0 +1,22 @@
+# Caliper Lab Pack — the data-plane image shipped to every lab.
+#
+# It bundles the full bioinformatics toolset (RNA-seq, ChIP-seq, ATAC-seq, DNA-seq) plus
+# the trivial lab-side runner. It holds NO product IP (no trust/calibration logic) — that
+# lives in the control plane. Every lab runs this identical, version-tagged image.
+#
+# Build (from the repo root):
+#     docker build -f lab-pack/Containerfile -t caliper-lab:1.0 .
+# Convert to an Apptainer/Singularity image (rootless, HPC-friendly — the usual lab case):
+#     apptainer build caliper-lab.sif docker-daemon://caliper-lab:1.0
+# Run one step (how the control plane dispatches):
+#     apptainer exec --bind <data>:ro --bind <workspace> caliper-lab.sif python step.py
+FROM mambaorg/micromamba:1.5.8
+
+COPY lab-pack/environment.yml /tmp/environment.yml
+RUN micromamba install -y -n base -f /tmp/environment.yml && micromamba clean -a -y
+
+# the lab-side runner (executes the dispatched step + reports progress; no product logic)
+COPY caliper/lab/runner.py /opt/caliper/runner.py
+
+ENV PATH=/opt/conda/bin:$PATH
+WORKDIR /work

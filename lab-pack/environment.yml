@@ -1,0 +1,43 @@
+# Caliper Lab Pack — the full bioinformatics tool environment shipped to every lab.
+#
+# ONE consistent environment covering the supported assays, so every lab runs the
+# identical, version-tagged toolset. This is the source for both the container image
+# (lab-pack/Containerfile) and the conda fallback used by install.sh.
+#
+#   conda env create -p ./env/bio -f environment.yml     # (or: mamba env create ...)
+#
+# Reference genomes/indices are large and per-lab — built once on the lab by a recipe,
+# never stored here.
+name: caliper-bio
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  # QC
+  - fastqc
+  - multiqc
+  - fastp
+  # alignment
+  - bwa            # DNA-seq
+  - bowtie2        # ChIP-seq / ATAC-seq
+  - hisat2         # RNA-seq (spliced)
+  - star           # RNA-seq (spliced)
+  # quantification / counting
+  - salmon>=1.10   # RNA-seq, alignment-free (pin: the solver otherwise grabs broken 0.8.1)
+  - subread        # featureCounts
+  # peak calling (ChIP-seq / ATAC-seq)
+  - macs3
+  # variant calling (DNA-seq)
+  - gatk4
+  - bcftools
+  # utilities
+  - samtools
+  - bedtools
+  - pysam
+  # analysis / stats / plotting (control-plane synthesizes; lab computes)
+  - numpy
+  - pandas
+  - scipy
+  - statsmodels
+  - matplotlib
