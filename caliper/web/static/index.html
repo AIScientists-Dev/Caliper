@@ -90,8 +90,11 @@
   #login{background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:28px;width:320px}
   #login h3{color:var(--mint);margin:0 0 4px} #login p{color:var(--mut);font-size:12.5px;margin:0 0 14px}
   #login input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0a0f0d;color:var(--text);margin-bottom:12px;outline:none}
-  .labcard{background:var(--panel2);border:1px solid var(--line2);border-radius:14px;padding:28px 34px;text-align:center;cursor:pointer;transition:.15s;min-width:210px}
-  .labcard:hover{border-color:var(--mint);background:var(--panel);transform:translateY(-2px)}
+  .lbrand{display:flex;align-items:center;justify-content:center;gap:8px;font-size:24px;font-weight:700;margin-bottom:6px}
+  .lsub{color:var(--mut);font-size:13px;text-align:center;margin:0 0 16px}
+  .connectcard{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:20px;text-align:center}
+  .connectcard .muted{color:var(--mut);font-size:12.5px}
+  #login{width:340px}
 </style>
 </head>
 <body>
@@ -132,20 +135,26 @@
 </div>
 
 <div id="overlay"><div id="login">
-  <div id="landing">
-    <div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:22px;font-weight:700;margin-bottom:18px"><span style="color:var(--mint);font-size:24px">⟡</span> Caliper</div>
-    <div class="labcard" onclick="showLoginForm()">
-      <div style="font-size:30px">🔬</div>
-      <div style="font-weight:700;font-size:16px;margin-top:8px" id="labname">Lab</div>
-      <div style="color:var(--faint);font-size:12px;margin-top:4px">click to sign in</div>
-    </div>
-  </div>
-  <div id="loginform" style="display:none">
-    <h3 id="loginlab">Lab</h3><p>Sign in to continue.</p>
+  <!-- Step 1: anonymous sign-in — no lab is named here -->
+  <div id="signin">
+    <div class="lbrand"><span class="dot">⟡</span> Caliper</div>
+    <p class="lsub">Sign in to your secure workspace</p>
     <input id="email" type="email" placeholder="email" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
     <input id="pw" type="password" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Sign in</button>
-    <div id="loginerr" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+    <div id="loginerr" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center"></div>
+  </div>
+  <!-- Step 2: reveal the destination (only after auth) and confirm the connection -->
+  <div id="connect" style="display:none">
+    <div class="lbrand" style="font-size:18px"><span class="dot">⟡</span> Caliper</div>
+    <p class="lsub">Signed in as <b id="cwho" style="color:var(--text)"></b></p>
+    <div class="connectcard">
+      <div style="font-size:26px">🔒</div>
+      <div style="font-weight:700;font-size:16px;margin-top:6px">Connect to <span id="clab">your lab</span></div>
+      <div class="muted" style="margin-top:8px;line-height:1.5">Runs on a <b style="color:var(--text)">private lab server</b> (<span id="chost"></span>). Your data stays on that server — nothing is processed on a shared/public machine.</div>
+    </div>
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:14px" onclick="doConnect()">Connect →</button>
+    <div style="text-align:center;margin-top:10px"><a href="#" onclick="backToSignin();return false" style="color:var(--faint);font-size:12px">cancel</a></div>
   </div>
 </div></div>
 
@@ -157,9 +166,17 @@ const scroll=()=>{$('chat').scrollTop=$('chat').scrollHeight};
 function el(cls,html){const d=document.createElement('div');if(cls)d.className=cls;if(html!=null)d.innerHTML=html;return d;}
 
 async function api(u,o){const r=await fetch(u,o);if(r.status===401){$('overlay').style.display='flex';throw new Error('auth');}return r;}
-function showLoginForm(){$('landing').style.display='none';$('loginform').style.display='block';const e=$('email');if(e)e.focus();}
-async function doLogin(){const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:($('email')?$('email').value:''),password:$('pw').value})});
-  if(r.ok){$('overlay').style.display='none';init();}else $('loginerr').textContent='Incorrect email or password.';}
+async function doLogin(){
+  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value,password:$('pw').value})});
+  if(r.ok){ await showConnect(); } else $('loginerr').textContent='Incorrect email or password.';
+}
+async function showConnect(){
+  const w=await(await api('/api/whoami')).json();
+  $('cwho').textContent=w.email||''; $('clab').textContent=w.lab_name||'your lab'; $('chost').textContent=w.remote||'private server';
+  $('signin').style.display='none'; $('connect').style.display='block';
+}
+function doConnect(){ $('overlay').style.display='none'; loadSessions(); }
+function backToSignin(){ $('connect').style.display='none'; $('signin').style.display='block'; }
 
 function newChat(){SID=null;SELECTED=[];$('thread').innerHTML='';$('thread').appendChild($('empty')||el());renderCtx();}
 function renderCtx(){const c=$('ctx');c.innerHTML='';SELECTED.forEach((p,i)=>{const ch=el('chip','📄 <b>'+esc(p.split('/').pop())+'</b><span onclick="unselect('+i+')">✕</span>');c.appendChild(ch);});}
@@ -248,8 +265,9 @@ async function showLog(){try{const d=await(await api('/api/access-log')).json();
     tb.insertAdjacentHTML('beforeend','<tr><td>'+t+'</td><td>'+esc(e.email||'')+'</td><td class="num">'+esc(e.ip)+'</td><td>'+esc(e.event)+'</td><td>'+ok+'</td></tr>');});
   document.getElementById('logmodal').style.display='flex';}catch(e){}}
 async function init(){
-  try{const b=await(await fetch('/api/branding')).json();const nm=b.lab_name||'Lab';if($('labname'))$('labname').textContent=nm;if($('loginlab'))$('loginlab').textContent=nm;}catch(e){}
-  try{await api('/api/whoami');$('overlay').style.display='none';loadSessions();}catch(e){/* api() shows the overlay/landing on 401 */}
+  // agnostic landing: nothing about the lab is shown until after sign-in.
+  try{ await api('/api/whoami'); $('overlay').style.display='none'; loadSessions(); }
+  catch(e){ /* 401 -> api() shows the overlay; the sign-in screen is the default */ }
 }
 init();
 </script>

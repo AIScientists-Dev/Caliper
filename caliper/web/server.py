@@ -129,7 +129,7 @@ async def login(request: Request):
 
 @app.get("/api/branding")
 def branding():
-    return {"lab_name": LAB_NAME, "auth": _auth_configured()}
+    return {"auth": _auth_configured()}  # agnostic: no lab identity revealed pre-login
 
 
 @app.get("/api/access-log")
@@ -141,7 +141,8 @@ def access_log(_=Depends(require_auth)):
 def whoami(request: Request, _=Depends(require_auth)):
     email = _SESSIONS.get(request.cookies.get("caliper_session"), "")
     return {"data_root": DATA_ROOT, "pack": PACK, "lab_name": LAB_NAME,
-            "email": email, "auth_required": _auth_configured()}
+            "email": email, "auth_required": _auth_configured(),
+            "remote": os.environ.get("CALIPER_REMOTE_HOST") or "this server"}
 
 
 # --- read-only data browser/search (confined to DATA_ROOT) -----------------------
