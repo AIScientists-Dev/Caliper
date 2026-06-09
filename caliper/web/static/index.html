@@ -116,6 +116,20 @@
   .connectcard .muted{color:var(--mut);font-size:12.5px}
   #login{width:340px}
 
+  /* icons + example prompts */
+  .ic{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle}
+  .ic.spark{fill:currentColor;stroke:none}
+  .brand .dot{display:inline-flex} .brand .dot .ic.spark{color:var(--mint);width:20px;height:20px}
+  #burger{display:flex;align-items:center} #burger .ic{width:22px;height:22px}
+  #send .ic{width:20px;height:20px;stroke-width:2}
+  .empty .elogo{display:flex;justify-content:center;margin-bottom:14px}
+  .empty .elogo .ic.spark{width:34px;height:34px;color:var(--mint)}
+  .empty p{max-width:460px;margin:6px auto 0;font-size:13.5px;line-height:1.55}
+  .examples{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:640px;margin:28px auto 0;text-align:left}
+  .ex{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;color:var(--text);font-size:13px;line-height:1.45;cursor:pointer;transition:.15s}
+  .ex:hover{border-color:var(--mint);background:var(--panel2)}
+  @media (max-width:600px){.examples{grid-template-columns:1fr}}
+
   /* mobile top bar + responsive drawer nav (Manus-style) */
   #topbar{display:none;align-items:center;gap:12px;padding:10px 14px;background:#0a0f0d;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6}
   #burger{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1}
@@ -139,26 +153,39 @@
 </style>
 </head>
 <body>
-<div id="topbar"><button id="burger" onclick="toggleSidebar()" aria-label="menu">☰</button><div class="brand" style="padding:0;font-size:16px"><span class="dot">⟡</span> Caliper</div></div>
+<div id="topbar">
+  <button id="burger" onclick="toggleSidebar()" aria-label="menu"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="brand" style="padding:0;font-size:16px"><span class="dot"><svg class="ic spark" viewBox="0 0 24 24"><path d="M12 2l1.7 7.3L21 11l-7.3 1.7L12 20l-1.7-7.3L3 11l7.3-1.7z"/></svg></span> Caliper</div>
+</div>
 <div id="scrim" onclick="toggleSidebar()"></div>
 <div id="sidebar">
-  <div class="brand"><span class="dot">⟡</span> Caliper <small>v0.1</small></div>
-  <button class="btn primary" onclick="newChat()">✎ New analysis</button>
-  <button class="btn" onclick="toggleDrawer()">📁 Browse &amp; select data</button>
-  <button class="btn" onclick="showLog()">🔒 Access log</button>
+  <div class="brand"><span class="dot"><svg class="ic spark" viewBox="0 0 24 24"><path d="M12 2l1.7 7.3L21 11l-7.3 1.7L12 20l-1.7-7.3L3 11l7.3-1.7z"/></svg></span> Caliper <small>v0.1</small></div>
+  <button class="btn primary" onclick="newChat()"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4l9.5-9.5-4-4L4 16z"/><path d="M14.5 6.5l3 3"/></svg> New analysis</button>
+  <button class="btn" onclick="toggleDrawer()"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7a1 1 0 011-1h5l2 2h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg> Browse &amp; select data</button>
+  <button class="btn" onclick="showLog()"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.2-3 7.3-7 8-4-.7-7-3.8-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg> Access log</button>
   <div id="sessions"></div>
   <div class="tagline">An analyst that knows when to trust itself.</div>
 </div>
 
 <div id="main">
   <div id="chat"><div class="col" id="thread">
-    <div class="empty" id="empty"><h2>What should we analyze?</h2>Select data on the left, then ask — Caliper runs it, shows its work, and tells you whether to trust the result.</div>
+    <div class="empty" id="empty">
+      <div class="elogo"><svg class="ic spark" viewBox="0 0 24 24"><path d="M12 2l1.7 7.3L21 11l-7.3 1.7L12 20l-1.7-7.3L3 11l7.3-1.7z"/></svg></div>
+      <h2>What should we analyze?</h2>
+      <p>Caliper runs the analysis on your private server, shows its work, and tells you whether to trust the result.</p>
+      <div class="examples">
+        <button class="ex" onclick="useExample(this)">Summarize the RNA-seq data on this server — conditions, samples, and replicates.</button>
+        <button class="ex" onclick="useExample(this)">Check Salmon quantification quality across samples and flag any low-quality one.</button>
+        <button class="ex" onclick="useExample(this)">Run differential expression between the ON and OFF conditions and list the top genes.</button>
+        <button class="ex" onclick="useExample(this)">Is MYC up-regulated in ON vs OFF? Report its log2 fold-change.</button>
+      </div>
+    </div>
   </div></div>
   <div id="inputbar">
     <div id="ctx" class="col"></div>
     <div class="composer">
       <textarea id="box" rows="1" placeholder="Ask Caliper to analyze your data…"></textarea>
-      <button id="send" onclick="send()" title="Send">➤</button>
+      <button id="send" onclick="send()" title="Send"><svg class="ic" viewBox="0 0 24 24"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg></button>
     </div>
   </div>
 </div>
@@ -221,6 +248,7 @@ async function showConnect(){
 function doConnect(){ $('overlay').style.display='none'; loadSessions(); }
 function backToSignin(){ $('connect').style.display='none'; $('signin').style.display='block'; }
 
+function useExample(btn){box.value=btn.textContent.trim();box.dispatchEvent(new Event('input'));send();}
 function toggleSidebar(){const open=$('sidebar').classList.toggle('open');$('scrim').classList.toggle('show',open);}
 function closeNav(){$('sidebar').classList.remove('open');$('scrim').classList.remove('show');}
 function newChat(){SID=null;SELECTED=[];$('thread').innerHTML='';$('thread').appendChild($('empty')||el());renderCtx();closeNav();}
@@ -373,7 +401,7 @@ async function doSearch(){const q=$('searchbox').value.trim();if(!q)return brows
 
 async function loadSessions(){try{const s=await(await api('/api/sessions')).json();const c=$('sessions');c.innerHTML='';
   s.forEach(x=>{const d=el('sess');
-    d.innerHTML='<span class="stitle">💬 '+esc(x.title)+'</span><span class="sdel" title="delete">✕</span>';
+    d.innerHTML='<span class="stitle"><svg class="ic" style="width:14px;height:14px;opacity:.7" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 011 1v8a1 1 0 01-1 1H9l-4 3.5V6a1 1 0 011-1z"/></svg> '+esc(x.title)+'</span><span class="sdel" title="delete"><svg class="ic" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg></span>';
     d.querySelector('.stitle').onclick=()=>openSession(x.id);
     d.querySelector('.sdel').onclick=(e)=>{e.stopPropagation();delSession(x.id);};
     c.appendChild(d);});}catch(e){}}

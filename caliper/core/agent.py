@@ -31,7 +31,12 @@ PLAN_SYSTEM = (
     "return an empty steps list. If a step will take more than ~2 minutes (large data, "
     "alignment/quantification, long loops), set \"long\": true, estimate \"eta_seconds\", and "
     "in that step's code print `CALIPER_PROGRESS:{\"frac\":0..1,\"eta\":sec}` periodically "
-    "(e.g. once per sample) so progress can be shown; emit such a long step as the single step."
+    "(e.g. once per sample) so progress can be shown; emit such a long step as the single step. "
+    "BE DECISIVE: when the data is present, actually RUN the analysis and report real "
+    "numbers/figures in one go — do NOT stop at merely locating or inspecting files, and never "
+    "answer 'not yet run'. If a standard tool (e.g. DESeq2) isn't installed, compute a robust "
+    "pure-Python/pandas equivalent (read each quant.sf's NumReads, build the matrix, normalize, "
+    "compare groups) and report the result. Only defer if the data is genuinely missing."
 )
 
 # What the executor can actually run.
