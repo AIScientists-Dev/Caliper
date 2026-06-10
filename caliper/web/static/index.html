@@ -6,6 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
   :root{
     --bg:#ece9e0; --panel:#f5f3ec; --panel2:#e4e1d6; --line:#d7d3c5; --line2:#c5c1b1;
@@ -24,7 +25,8 @@
   #sidebar{width:256px;background:var(--bg);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px;gap:4px}
   .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:.01em;color:var(--text);padding:2px 2px 14px}
   .brand .dot{width:30px;height:30px;border:1.5px solid var(--text);border-radius:7px;display:grid;place-items:center}
-  .brand .dot .ic.spark{width:17px;height:17px;color:var(--text)}
+  .brand .dot .ic.spark{width:22px;height:auto;color:var(--text)}
+  .ava.c .ic.spark{width:15px;height:auto}
   .brand small{font-family:var(--mono);font-weight:400;color:var(--faint);font-size:10px;margin-left:auto;letter-spacing:.05em}
   .btn{background:transparent;border:none;color:var(--mut);border-radius:6px;padding:9px 10px;cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;text-align:left;transition:.12s;display:flex;gap:11px;align-items:center}
   .btn:hover{background:var(--panel2);color:var(--text)}
@@ -117,7 +119,7 @@
   #login input:focus{border-color:var(--text)}
   .lbrand{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:8px}
   .lbrand .dot{width:28px;height:28px;border:1.5px solid var(--text);border-radius:6px;display:grid;place-items:center}
-  .lbrand .dot .ic.spark{width:16px;height:16px;color:var(--text)}
+  .lbrand .dot .ic.spark{width:20px;height:auto;color:var(--text)}
   .lsub{color:var(--mut);font-size:13px;text-align:center;margin:0 0 18px}
   .connectcard{background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:22px;text-align:center}
   .connectcard .muted{color:var(--mut);font-size:12.5px}
@@ -129,7 +131,9 @@
   #send .ic{width:19px;height:19px;stroke-width:2.2;color:var(--accent-fg)}
   .empty .elogo{display:flex;justify-content:center;margin-bottom:16px}
   .empty .elogo .dotbox{width:46px;height:46px;border:1.5px solid var(--text);border-radius:10px;display:grid;place-items:center}
-  .empty .elogo .ic.spark{width:26px;height:26px;color:var(--text)}
+  .empty .elogo .ic.spark{width:32px;height:auto;color:var(--text)}
+  .ghlink{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--faint);text-decoration:none;padding:4px}
+  .ghlink:hover{color:var(--text)} .ghlink .ic{width:14px;height:14px}
   .empty p{max-width:460px;margin:6px auto 0;font-size:14px;line-height:1.6;color:var(--mut)}
   .examples{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:640px;margin:30px auto 0;text-align:left}
   .ex{background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:14px 16px;color:var(--text);font-size:13px;line-height:1.5;cursor:pointer;transition:.12s}
@@ -171,6 +175,7 @@
   <button class="btn" onclick="toggleDrawer()"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7a1 1 0 011-1h5l2 2h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg> Browse &amp; select data</button>
   <button class="btn" onclick="showLog()"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.2-3 7.3-7 8-4-.7-7-3.8-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg> Access log</button>
   <div id="sessions"></div>
+  <a class="ghlink" href="https://github.com/AIScientists-Dev/caliper" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" style="fill:currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.2 3.44 9.6 8.21 11.16.6.11.82-.25.82-.56 0-.27-.01-1.01-.02-1.99-3.34.71-4.04-1.59-4.04-1.59-.55-1.37-1.34-1.74-1.34-1.74-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.22 1.84 1.22 1.07 1.81 2.81 1.29 3.5.99.11-.77.42-1.29.76-1.59-2.67-.3-5.47-1.32-5.47-5.86 0-1.29.47-2.35 1.24-3.18-.13-.3-.54-1.51.11-3.15 0 0 1.01-.32 3.3 1.21.96-.26 1.98-.39 3-.4 1.02.01 2.04.14 3 .4 2.29-1.53 3.3-1.21 3.3-1.21.65 1.64.24 2.85.12 3.15.77.83 1.23 1.89 1.23 3.18 0 4.55-2.81 5.56-5.49 5.85.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.28 0 .32.21.69.83.57C20.57 21.88 24 17.49 24 12.29 24 5.78 18.63.5 12 .5z"/></svg> Open source on GitHub</a>
   <div class="tagline">An analyst that knows when to trust itself.</div>
 </div>
 
@@ -299,7 +304,7 @@ async function send(){
   }catch(e){evs.appendChild(el('ev','<span style="color:var(--red)">connection error</span>'));}
   $('send').disabled=false;loadSessions();
 }
-function mk(role,label,html,user){const m=el('msg'+(user?' user':''));m.appendChild(el('role','<div class="ava '+(user?'u':'c')+'">'+(user?'Y':'⟡')+'</div>'+label));const b=el('body');b.innerHTML=html||'';m.appendChild(b);return m;}
+function mk(role,label,html,user){const m=el('msg'+(user?' user':''));m.appendChild(el('role','<div class="ava '+(user?'u':'c')+'">'+(user?'Y':MM)+'</div>'+label));const b=el('body');b.innerHTML=html||'';m.appendChild(b);return m;}
 
 function mdToHtml(md){
   let s=esc(md);
@@ -424,11 +429,14 @@ async function showLog(){try{const d=await(await api('/api/access-log')).json();
   d.forEach(e=>{const t=new Date(e.ts*1000).toLocaleString();const ok=e.ok?'<span class="up">success</span>':'<span class="down">FAILED</span>';
     tb.insertAdjacentHTML('beforeend','<tr><td>'+t+'</td><td>'+esc(e.email||'')+'</td><td class="num">'+esc(e.ip)+'</td><td>'+esc(e.event)+'</td><td>'+ok+'</td></tr>');});
   document.getElementById('logmodal').style.display='flex';}catch(e){}}
+const MM='<svg class="ic spark" viewBox="0 0 105 80"><path d="M20.5751 29.3744C26.4732 29.3744 31.2546 24.5896 31.2546 18.6872C31.2546 12.7848 26.4732 8 20.5751 8C14.6769 8 9.89551 12.7848 9.89551 18.6872C9.89551 24.5896 14.6769 29.3744 20.5751 29.3744Z"/><path d="M41.8207 50.6356C47.7188 50.6356 52.5002 45.8508 52.5002 39.9484C52.5002 34.046 47.7188 29.2612 41.8207 29.2612C35.9225 29.2612 31.1411 34.046 31.1411 39.9484C31.1411 45.8508 35.9225 50.6356 41.8207 50.6356Z"/><path d="M20.5751 71.9999C26.4732 71.9999 31.2546 67.2151 31.2546 61.3127C31.2546 55.4103 26.4732 50.6255 20.5751 50.6255C14.6769 50.6255 9.89551 55.4103 9.89551 61.3127C9.89551 67.2151 14.6769 71.9999 20.5751 71.9999Z"/><path d="M73.8586 39.9517V50.6389H84.5382C78.6304 50.6389 73.8586 45.8637 73.8586 39.9517Z"/><path d="M84.4244 50.6255H73.7449V61.3127C73.7449 55.4006 78.5166 50.6255 84.4244 50.6255Z"/><path d="M84.4246 50.6389H95.1041V39.9517C95.1041 45.8637 90.3324 50.6389 84.4246 50.6389Z"/><path d="M84.425 50.6255C90.3329 50.6255 95.1046 55.4006 95.1046 61.3127V50.6255H84.425Z"/><path d="M31.2539 18.6885V29.3757H41.9335C36.0256 29.3757 31.2539 24.6005 31.2539 18.6885Z"/><path d="M20.5747 29.2556H31.2543V18.5684C31.2543 24.4804 26.4826 29.2556 20.5747 29.2556Z"/><path d="M41.8202 29.2612H31.1406V39.9484C31.1406 34.0364 35.9123 29.2612 41.8202 29.2612Z"/><path d="M20.5747 29.2612C26.4826 29.2612 31.2543 34.0364 31.2543 39.9484V29.2612H20.5747Z"/><path d="M63.1796 29.3744C69.0777 29.3744 73.8591 24.5896 73.8591 18.6872C73.8591 12.7848 69.0777 8 63.1796 8C57.2814 8 52.5 12.7848 52.5 18.6872C52.5 24.5896 57.2814 29.3744 63.1796 29.3744Z"/><path d="M84.4244 50.6356C90.3226 50.6356 95.104 45.8508 95.104 39.9484C95.104 34.046 90.3226 29.2612 84.4244 29.2612C78.5263 29.2612 73.7449 34.046 73.7449 39.9484C73.7449 45.8508 78.5263 50.6356 84.4244 50.6356Z"/><path d="M84.4244 71.9999C90.3226 71.9999 95.104 67.2151 95.104 61.3127C95.104 55.4103 90.3226 50.6255 84.4244 50.6255C78.5263 50.6255 73.7449 55.4103 73.7449 61.3127C73.7449 67.2151 78.5263 71.9999 84.4244 71.9999Z"/><path d="M73.8589 18.6885V29.3757H84.5384C78.6306 29.3757 73.8589 24.6005 73.8589 18.6885Z"/><path d="M63.1797 29.2556H73.8593V18.5684C73.8593 24.4804 69.0875 29.2556 63.1797 29.2556Z"/><path d="M84.4247 29.2612H73.7451V39.9484C73.7451 34.0364 78.5168 29.2612 84.4247 29.2612Z"/><path d="M63.1797 29.2612C69.0875 29.2612 73.8593 34.0364 73.8593 39.9484V29.2612H63.1797Z"/></svg>';
+function paintLogos(){document.querySelectorAll('.brand .dot,.lbrand .dot,.dotbox').forEach(e=>{e.innerHTML=MM;});}
 async function init(){
   // agnostic landing: nothing about the lab is shown until after sign-in.
   try{ await api('/api/whoami'); $('overlay').style.display='none'; loadSessions(); }
   catch(e){ /* 401 -> api() shows the overlay; the sign-in screen is the default */ }
 }
+paintLogos();
 init();
 </script>
 </body>
