@@ -24,7 +24,7 @@
   /* sidebar */
   #sidebar{width:256px;background:var(--bg);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px;gap:4px}
   .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:.01em;color:var(--text);padding:2px 2px 14px}
-  .brand .dot{width:30px;height:30px;border:1.5px solid var(--text);border-radius:7px;display:grid;place-items:center}
+  .brand .dot{display:inline-flex;align-items:center}
   .brand .dot .ic.spark{width:22px;height:auto;color:var(--text)}
   .ava.c .ic.spark{width:15px;height:auto}
   .brand small{font-family:var(--mono);font-weight:400;color:var(--faint);font-size:10px;margin-left:auto;letter-spacing:.05em}
@@ -118,7 +118,7 @@
   #login input{width:100%;padding:11px 12px;border-radius:7px;border:1px solid var(--line2);background:var(--bg);color:var(--text);margin-bottom:12px;outline:none;font-family:var(--sans);font-size:14px}
   #login input:focus{border-color:var(--text)}
   .lbrand{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:8px}
-  .lbrand .dot{width:28px;height:28px;border:1.5px solid var(--text);border-radius:6px;display:grid;place-items:center}
+  .lbrand .dot{display:inline-flex;align-items:center}
   .lbrand .dot .ic.spark{width:20px;height:auto;color:var(--text)}
   .lsub{color:var(--mut);font-size:13px;text-align:center;margin:0 0 18px}
   .connectcard{background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:22px;text-align:center}
@@ -130,8 +130,8 @@
   #burger{display:flex;align-items:center} #burger .ic{width:22px;height:22px}
   #send .ic{width:19px;height:19px;stroke-width:2.2;color:var(--accent-fg)}
   .empty .elogo{display:flex;justify-content:center;margin-bottom:16px}
-  .empty .elogo .dotbox{width:46px;height:46px;border:1.5px solid var(--text);border-radius:10px;display:grid;place-items:center}
-  .empty .elogo .ic.spark{width:32px;height:auto;color:var(--text)}
+  .empty .elogo .dotbox{display:inline-flex;align-items:center;justify-content:center}
+  .empty .elogo .ic.spark{width:40px;height:auto;color:var(--text)}
   .ghlink{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--faint);text-decoration:none;padding:4px}
   .ghlink:hover{color:var(--text)} .ghlink .ic{width:14px;height:14px}
   .empty p{max-width:460px;margin:6px auto 0;font-size:14px;line-height:1.6;color:var(--mut)}
