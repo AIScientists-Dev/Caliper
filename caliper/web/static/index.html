@@ -83,7 +83,8 @@
   .fbtns{display:flex;gap:8px}
   .fb{border:1px solid var(--line2);background:var(--panel);color:var(--text);border-radius:6px;padding:7px 14px;cursor:pointer;font-size:13px}
   .fb:hover{border-color:var(--text)} .fb.no:hover{border-color:var(--red);color:var(--red)}
-  .fbnote{width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:6px;color:var(--text);padding:8px;font-size:13px;margin-bottom:8px;resize:vertical;font-family:var(--sans)}
+  .fbnote{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:7px;color:var(--text);padding:9px 11px;font-size:13px;line-height:1.5;margin-bottom:9px;resize:none;font-family:var(--sans);outline:none;scrollbar-width:none}
+  .fbnote:focus{border-color:var(--text)} .fbnote::-webkit-scrollbar{display:none}
   .stdout{background:#22201a;border:1px solid var(--line2);border-radius:6px;padding:8px;font-family:var(--mono);font-size:11px;color:#cfe6cf;max-height:150px;overflow:auto;white-space:pre-wrap;margin-top:6px}
   .jobcard{border:1px solid var(--line2);border-radius:var(--radius);background:var(--panel);padding:16px;margin-top:4px}
   .jobtitle{font-weight:600;font-size:14px;margin-bottom:12px}
@@ -91,6 +92,31 @@
   .bar > i{display:block;height:100%;width:0;background:var(--green);transition:width .5s ease}
   .jobmeta{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:9px;text-transform:uppercase;letter-spacing:.03em}
   .jobmeta .loglink{cursor:pointer;color:var(--faint)}
+  /* flow / pipeline visualization */
+  .flow{border:1px solid var(--line2);border-radius:var(--radius);background:var(--panel);padding:14px 16px;margin-bottom:14px;overflow-x:auto}
+  .flowhdr{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin-bottom:14px}
+  .flowhdr .ic{width:14px;height:14px;stroke-width:1.6}
+  .flowrow{display:flex;align-items:center;min-width:min-content;padding-bottom:2px}
+  .flownode{flex:0 0 auto;width:118px;border:1px solid var(--line2);border-radius:9px;background:var(--bg);padding:11px 10px;text-align:center;transition:.2s;cursor:default}
+  .flownode .ic{width:20px;height:20px;color:var(--mut);margin-bottom:6px;stroke-width:1.6}
+  .fl-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.25}
+  .fl-sub{font-family:var(--mono);font-size:9px;color:var(--faint);margin-top:3px;letter-spacing:.02em;text-transform:uppercase}
+  .flownode.running{border-color:var(--green);box-shadow:0 0 0 3px rgba(47,143,87,.12)}
+  .flownode.running .ic{color:var(--green);animation:flpulse 1.2s ease-in-out infinite}
+  .flownode.done .ic{color:var(--text)}
+  .flownode.pending{opacity:.5}
+  @keyframes flpulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .flowedge{flex:0 0 32px;align-self:center}
+  .flowedge svg{width:32px;height:12px;display:block;overflow:visible}
+  .flowedge .eline{stroke:var(--line2);stroke-width:2;fill:none}
+  .flowedge .ehead{fill:var(--line2)}
+  .flowedge.active .eline{stroke:var(--green);stroke-dasharray:4 4;animation:flflow .6s linear infinite}
+  .flowedge.active .ehead{fill:var(--green)}
+  @keyframes flflow{to{stroke-dashoffset:-8}}
+  #flowcard{position:fixed;z-index:30;max-width:262px;background:var(--panel);border:1px solid var(--line2);border-radius:9px;padding:12px 13px;box-shadow:0 10px 28px rgba(28,26,21,.14);font-size:12.5px;color:var(--mut);line-height:1.5;display:none}
+  #flowcard .fc-t{font-weight:600;color:var(--text);font-size:13px;margin-bottom:4px}
+  #flowcard a{color:var(--green);text-decoration:none;font-family:var(--mono);font-size:11px;margin-top:9px;display:inline-block}
+  #flowcard a:hover{text-decoration:underline}
 
   /* composer */
   #inputbar{padding:14px 20px 22px;background:linear-gradient(180deg,transparent,var(--bg) 35%)}
@@ -99,7 +125,8 @@
   .chip b{color:var(--text)} .chip span{cursor:pointer;color:var(--faint);margin-left:6px}
   .composer{max-width:740px;margin:0 auto;display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:6px 6px 6px 16px}
   .composer:focus-within{border-color:var(--text)}
-  textarea{flex:1;background:transparent;border:none;color:var(--text);font-size:15px;resize:none;height:24px;max-height:160px;font-family:var(--sans);outline:none;padding:8px 0}
+  textarea{flex:1;background:transparent;border:none;color:var(--text);font-size:15px;line-height:1.5;resize:none;height:26px;max-height:160px;font-family:var(--sans);outline:none;padding:4px 2px;overflow-y:auto;scrollbar-width:none}
+  textarea::-webkit-scrollbar{display:none}
   textarea::placeholder{color:var(--faint)}
   #send{background:var(--accent);color:var(--accent-fg);border:none;border-radius:7px;width:38px;height:38px;cursor:pointer;flex:0 0 auto;display:grid;place-items:center}
   #send:hover{background:#000} #send:disabled{opacity:.35;cursor:default}
@@ -169,6 +196,7 @@
   <div class="brand" style="padding:0;font-size:16px"><span class="dot"><svg class="ic spark" viewBox="0 0 24 24"><path d="M12 2l1.7 7.3L21 11l-7.3 1.7L12 20l-1.7-7.3L3 11l7.3-1.7z"/></svg></span> Caliper</div>
 </div>
 <div id="scrim" onclick="toggleSidebar()"></div>
+<div id="flowcard"></div>
 <div id="sidebar">
   <div class="brand"><span class="dot"><svg class="ic spark" viewBox="0 0 24 24"><path d="M12 2l1.7 7.3L21 11l-7.3 1.7L12 20l-1.7-7.3L3 11l7.3-1.7z"/></svg></span> Caliper <small>v0.1</small></div>
   <button class="btn primary" onclick="newChat()"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4l9.5-9.5-4-4L4 16z"/><path d="M14.5 6.5l3 3"/></svg> New analysis</button>
@@ -269,7 +297,7 @@ function renderCtx(){const c=$('ctx');c.innerHTML='';SELECTED.forEach((p,i)=>{co
 function unselect(i){SELECTED.splice(i,1);renderCtx();}
 function toggleDrawer(){$('drawer').classList.toggle('open');if($('drawer').classList.contains('open'))browse(CWD);}
 
-const box=$('box');box.addEventListener('input',()=>{box.style.height='24px';box.style.height=Math.min(box.scrollHeight,160)+'px';});
+const box=$('box');box.addEventListener('input',()=>{box.style.height='auto';box.style.height=Math.min(box.scrollHeight,160)+'px';});
 box.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 
 function fmtFC(v){const n=Number(v);const c=n>0?'up':(n<0?'down':'');return '<span class="'+c+'">'+(n>0?'+':'')+n.toFixed(2)+'</span>';}
@@ -289,11 +317,12 @@ function renderAnswer(a){
 }
 
 async function send(){
-  const t=box.value.trim();if(!t)return;box.value='';box.style.height='24px';$('send').disabled=true;
+  const t=box.value.trim();if(!t)return;box.value='';box.style.height='26px';$('send').disabled=true;
   if($('empty'))$('empty').remove();
   $('thread').appendChild(mk('user','You','<div class="text">'+esc(t)+'</div>',true));
   const m=mk('caliper','Caliper','');const proc=el('process');const sum=el('','<span class="spinner"></span> Working…');sum.style.cssText='';
-  const det=document.createElement('details');det.className='proc';det.open=true;const s=document.createElement('summary');s.innerHTML='<span class="spinner"></span> Working…';const evs=el('events');det.appendChild(s);det.appendChild(evs);
+  const flowHost=el('flow');flowHost.style.display='none';m.querySelector('.body').appendChild(flowHost);
+  const det=document.createElement('details');det.className='proc';det.open=true;det._flow=flowHost;const s=document.createElement('summary');s.innerHTML='<span class="spinner"></span> Working…';const evs=el('events');det.appendChild(s);det.appendChild(evs);
   m.querySelector('.body').appendChild(det);const resultHost=el('');m.querySelector('.body').appendChild(resultHost);
   $('thread').appendChild(m);scroll();
   try{
@@ -306,12 +335,88 @@ async function send(){
 }
 function mk(role,label,html,user){const m=el('msg'+(user?' user':''));m.appendChild(el('role','<div class="ava '+(user?'u':'c')+'">'+(user?'Y':MM)+'</div>'+label));const b=el('body');b.innerHTML=html||'';m.appendChild(b);return m;}
 
+/* ---- Flow / pipeline visualization (educational, live) ---- */
+const TOOLDOC={
+ salmon:{t:'Salmon',d:'Counts how many reads map to each transcript — fast, without full alignment.',u:'https://salmon.readthedocs.io'},
+ star:{t:'STAR aligner',d:'Places RNA-seq reads on the genome, aware of gene splicing.',u:'https://github.com/alexdobin/STAR'},
+ hisat2:{t:'HISAT2',d:'A memory-light splice-aware RNA aligner.',u:'https://daehwankimlab.github.io/hisat2/'},
+ deseq2:{t:'DESeq2',d:'Finds genes that change between conditions with a proper statistical test.',u:'https://bioconductor.org/packages/release/bioc/html/DESeq2.html'},
+ macs3:{t:'MACS3',d:'Finds peaks — where a protein binds DNA — from ChIP-seq / ATAC-seq reads.',u:'https://macs3-project.github.io/MACS/'},
+ macs2:{t:'MACS2',d:'Finds peaks from ChIP-seq / ATAC-seq reads.',u:'https://macs3-project.github.io/MACS/'},
+ bwa:{t:'BWA',d:'Aligns DNA reads to a reference genome.',u:'https://bio-bwa.sourceforge.net/'},
+ bowtie2:{t:'Bowtie2',d:'A fast short-read aligner used for ChIP/ATAC.',u:'http://bowtie-bio.sourceforge.net/bowtie2/index.shtml'},
+ bcftools:{t:'bcftools',d:'Calls genetic variants (SNPs / indels) from alignments.',u:'https://samtools.github.io/bcftools/howtos/variant-calling.html'},
+ gatk:{t:'GATK',d:'The industry-standard variant-calling toolkit.',u:'https://gatk.broadinstitute.org/'},
+ featurecounts:{t:'featureCounts',d:'Counts aligned reads per gene.',u:'https://subread.sourceforge.net/'},
+ fastqc:{t:'FastQC',d:'Quality-checks raw sequencing reads before analysis.',u:'https://www.bioinformatics.babraham.ac.uk/projects/fastqc/'},
+ python:{t:'Python analysis',d:'Custom data processing & statistics (pandas / scipy).',u:'https://en.wikipedia.org/wiki/Differential_expression_analysis'},
+ none:{t:'Inspect data',d:'Read and summarize what data is present.',u:'https://en.wikipedia.org/wiki/RNA-Seq'}};
+const FIC={
+ data:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 6c0-1.66 3.58-3 8-3s8 1.34 8 3-3.58 3-8 3-8-1.34-8-3z"/><path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg>',
+ tool:'<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><path d="M12 2.6v3.1M12 18.3v3.1M2.6 12h3.1M18.3 12h3.1M5.4 5.4l2.2 2.2M16.4 16.4l2.2 2.2M18.6 5.4l-2.2 2.2M7.6 16.4l-2.2 2.2"/></svg>',
+ result:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-6M3 20h18"/></svg>',
+ server:'<svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="7" rx="1.5"/><rect x="3.5" y="13" width="17" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>'};
+function flowNode(n){
+  const d=el('flownode '+n.type+' '+(n.type==='data'?'done':'pending'));
+  const icon=n.type==='data'?FIC.data:(n.type==='result'?FIC.result:FIC.tool);
+  const info=TOOLDOC[(n.tool||'').toLowerCase()]||{};
+  const title=n.type==='data'?'Your data':(n.type==='result'?'Result':(info.t||n.tool||'step'));
+  const sub=n.type==='data'?'lab server':(n.type==='result'?'+ trust':'tool');
+  d.innerHTML=icon+'<div class="fl-title">'+esc(title)+'</div><div class="fl-sub">'+esc(sub)+'</div>';
+  d.onmouseenter=ev=>showFlowCard(ev,n); d.onmouseleave=hideFlowCard;
+  return d;
+}
+function flowEdge(){const e=el('flowedge');e.innerHTML='<svg viewBox="0 0 32 12"><path class="eline" d="M0 6H24"/><path class="ehead" d="M24 2l6 4-6 4z"/></svg>';return e;}
+function buildFlow(host,tools){
+  const ns=[{type:'data'}].concat((tools||[]).map(t=>({type:'tool',tool:t}))).concat([{type:'result'}]);
+  host.innerHTML='<div class="flowhdr">'+FIC.server+' Pipeline · runs on your private server · hover to learn</div>';
+  const row=el('flowrow');host.appendChild(row);
+  ns.forEach((n,i)=>{if(i>0)row.appendChild(flowEdge());row.appendChild(flowNode(n));});
+}
+const _fn=h=>[...h.querySelectorAll('.flownode')], _fe=h=>[...h.querySelectorAll('.flowedge')];
+function flowStep(host){
+  const ns=_fn(host),es=_fe(host);
+  const t=ns.findIndex((nd,k)=>k>0&&k<ns.length-1&&nd.classList.contains('pending'));
+  if(t<0)return;
+  for(let k=1;k<t;k++){ns[k].classList.remove('running','pending');ns[k].classList.add('done');}
+  ns[t].classList.remove('pending');ns[t].classList.add('running');
+  if(es[t-1])es[t-1].classList.add('active');
+}
+function flowExec(host){const r=_fn(host).find(n=>n.classList.contains('running'));if(r){r.classList.remove('running');r.classList.add('done');}}
+function flowDone(host){if(!host)return;_fn(host).forEach(n=>{n.classList.remove('running','pending');n.classList.add('done');});_fe(host).forEach(e=>e.classList.remove('active'));}
+function showFlowCard(ev,n){
+  const c=$('flowcard'),k=(n.tool||'').toLowerCase();
+  const info=n.type==='data'?{t:'Your data',d:'The sequencing data on your private lab server — read in place, never moved off it.',u:'https://en.wikipedia.org/wiki/RNA-Seq'}
+    :n.type==='result'?{t:'Result',d:'The findings, with a calibrated trust score so you know whether to rely on them.',u:''}
+    :(TOOLDOC[k]||{t:n.tool,d:'A bioinformatics tool.',u:''});
+  c.innerHTML='<div class="fc-t">'+esc(info.t)+'</div>'+esc(info.d)+(info.u?'<br><a href="'+info.u+'" target="_blank" rel="noopener">Learn more ↗</a>':'');
+  const r=ev.currentTarget.getBoundingClientRect();
+  c.style.display='block';
+  c.style.left=Math.max(10,Math.min(r.left,window.innerWidth-275))+'px';
+  c.style.top=(r.bottom+8)+'px';
+}
+function hideFlowCard(){$('flowcard').style.display='none';}
+function mdTables(s){
+  const lines=s.split('\n'),out=[]; let i=0;
+  const isRow=l=>/^\s*\|.*\|\s*$/.test(l), isSep=l=>/^\s*\|[\s:|-]+\|\s*$/.test(l);
+  const cells=l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+  while(i<lines.length){
+    if(isRow(lines[i])&&i+1<lines.length&&isSep(lines[i+1])){
+      const head=cells(lines[i]); i+=2; const rows=[];
+      while(i<lines.length&&isRow(lines[i])&&!isSep(lines[i])){rows.push(cells(lines[i]));i++;}
+      out.push('<table><thead><tr>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'
+        +rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table>');
+    }else{out.push(lines[i]);i++;}
+  }
+  return out.join('\n');
+}
 function mdToHtml(md){
   let s=esc(md);
+  s=mdTables(s);
   s=s.replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^#{1,2} (.*)$/gm,'<h3>$1</h3>');
   s=s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>');
   s=s.replace(/(?:^|\n)((?:- .*(?:\n|$))+)/g,m=>'<ul>'+m.trim().split(/\n/).map(l=>'<li>'+l.replace(/^- /,'')+'</li>').join('')+'</ul>');
-  return s.split(/\n{2,}/).map(b=>/^\s*<(h3|h4|ul)/.test(b)?b:'<p>'+b.replace(/\n/g,'<br>')+'</p>').join('');
+  return s.split(/\n{2,}/).map(b=>/^\s*<(h3|h4|ul|table)/.test(b)?b:'<p>'+b.replace(/\n/g,'<br>')+'</p>').join('');
 }
 function sendFeedback(row,correct,trust){
   row.innerHTML='<div class="q">'+(correct?'Glad it looks right.':'Thanks for flagging it.')
@@ -362,6 +467,7 @@ async function pollJob(jid,card,host,eta0){
     }else if(st.state==='done'||st.state==='failed'){
       bar.style.width='100%';title.textContent=(st.state==='done'?'✓ ':'✗ ')+title.textContent.replace(/^[⟳✓✗]\s*/,'');
       jt.textContent=st.state==='done'?'done':'failed';
+      {const fh=card.closest('.body')&&card.closest('.body').querySelector('.flow');if(fh)flowDone(fh);}
       renderFinal(host,{answer_text:st.answer_text,answer:st.answer,trust:st.trust||0,accepted:st.accepted,calibrated:st.calibrated});
       scroll();
     }else{jt.textContent='status: '+(st.state||'unknown');setTimeout(tick,4000);}
@@ -371,21 +477,23 @@ async function pollJob(jid,card,host,eta0){
 function handle(e,evs,resultHost,sum,det){
   if(e.type==='session'){SID=e.session_id;}
   else if(e.type==='status'){sum.innerHTML='<span class="spinner"></span> '+esc(e.text);evs.appendChild(el('ev','<span style="color:var(--faint)">• '+esc(e.text)+'</span>'));}
-  else if(e.type==='plan'){evs.appendChild(el('ev plan','<b>Plan:</b> '+esc(e.summary)+(e.tools&&e.tools.length?' &middot; <span style="color:var(--faint)">'+esc(e.tools.join(', '))+'</span>':'')));}
-  else if(e.type==='step'){evs.appendChild(el('ev','▸ <b>'+esc(e.tool)+'</b> — '+esc(e.rationale)));evs._live=null;}
+  else if(e.type==='plan'){evs.appendChild(el('ev plan','<b>Plan:</b> '+esc(e.summary)+(e.tools&&e.tools.length?' &middot; <span style="color:var(--faint)">'+esc(e.tools.join(', '))+'</span>':'')));if(det._flow&&e.tools&&e.tools.length){buildFlow(det._flow,e.tools);det._flow.style.display='block';}}
+  else if(e.type==='step'){evs.appendChild(el('ev','▸ <b>'+esc(e.tool)+'</b> — '+esc(e.rationale)));evs._live=null;if(det._flow)flowStep(det._flow);}
   else if(e.type==='stdout'){let c=evs._live;if(!c){c=el('stdout');evs.appendChild(c);evs._live=c;}c.textContent=e.text;c.scrollTop=c.scrollHeight;}
   else if(e.type==='provision'){evs.appendChild(el('ev','<span style="color:var(--amber)">⚙ installing <b>'+esc(e.tool)+'</b> (self-evolve)…</span>'));}
   else if(e.type==='experience'){evs.appendChild(el('ev','<span style="color:var(--faint)">'+(e.ok?'✓ installed '+esc(e.tool):'could not install '+esc(e.tool))+'</span>'));}
-  else if(e.type==='exec'){evs._live=null;evs.appendChild(el('ev',e.blocked?'⛔ blocked by safety policy':(e.ok?'✓ ran successfully':'✗ step finished with a warning')));}
+  else if(e.type==='exec'){evs._live=null;evs.appendChild(el('ev',e.blocked?'⛔ blocked by safety policy':(e.ok?'✓ ran successfully':'✗ step finished with a warning')));if(det._flow)flowExec(det._flow);}
   else if(e.type==='trust'){resultHost._trust=e.trust;}
   else if(e.type==='answer'){let a=resultHost.querySelector('.answer');if(!a){a=el('answer');resultHost.appendChild(a);}a.innerHTML=mdToHtml(e.markdown);resultHost._answered=true;}
   else if(e.type==='decision'){
     sum.innerHTML='Done · '+(det._steps||0)+' step(s) · click to see how it worked';det.open=false;
+    if(det._flow)flowDone(det._flow);
     renderFinal(resultHost,{answer_text:e.answer_text,answer:e.answer,
       trust:(resultHost._trust!=null?resultHost._trust:0),accepted:e.accepted,calibrated:e.calibrated});
   }
   else if(e.type==='job'){
     sum.innerHTML='Dispatched to the lab — running in the background';det.open=false;
+    if(det._flow)flowStep(det._flow);
     const card=el('jobcard');
     card.innerHTML='<div class="jobtitle">⟳ '+esc(e.summary||e.tool||'Running on the lab server')+'</div>'
       +'<div class="bar"><i style="width:0%"></i></div>'
@@ -421,7 +529,7 @@ async function loadSessions(){try{const s=await(await api('/api/sessions')).json
 async function delSession(id){ if(!confirm('Delete this conversation?'))return; try{await api('/api/session/'+id,{method:'DELETE'});}catch(e){} if(SID===id)newChat(); loadSessions(); }
 async function openSession(id){closeNav();const s=await(await api('/api/session/'+id)).json();SID=id;$('thread').innerHTML='';
   s.messages.forEach(m=>{if(m.role==='user')$('thread').appendChild(mk('user','You','<div class="text">'+esc(m.content)+'</div>',true));
-    else{const mm=mk('caliper','Caliper','');const det=document.createElement('details');det.className='proc';const su=document.createElement('summary');su.textContent='✓ Done';const evs=el('events');det.appendChild(su);det.appendChild(evs);mm.querySelector('.body').appendChild(det);const rh=el('');mm.querySelector('.body').appendChild(rh);(m.events||[]).forEach(e=>handle(e,evs,rh,su,det));$('thread').appendChild(mm);}});scroll();}
+    else{const mm=mk('caliper','Caliper','');const flowHost=el('flow');flowHost.style.display='none';mm.querySelector('.body').appendChild(flowHost);const det=document.createElement('details');det.className='proc';det._flow=flowHost;const su=document.createElement('summary');su.textContent='✓ Done';const evs=el('events');det.appendChild(su);det.appendChild(evs);mm.querySelector('.body').appendChild(det);const rh=el('');mm.querySelector('.body').appendChild(rh);(m.events||[]).forEach(e=>handle(e,evs,rh,su,det));if(det._flow.querySelector('.flownode'))flowDone(det._flow);$('thread').appendChild(mm);}});scroll();}
 
 async function showLog(){try{const d=await(await api('/api/access-log')).json();
   const tb=document.querySelector('#logtable tbody');tb.innerHTML='';

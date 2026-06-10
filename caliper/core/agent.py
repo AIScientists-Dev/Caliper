@@ -36,7 +36,17 @@ PLAN_SYSTEM = (
     "numbers/figures in one go — do NOT stop at merely locating or inspecting files, and never "
     "answer 'not yet run'. If a standard tool (e.g. DESeq2) isn't installed, compute a robust "
     "pure-Python/pandas equivalent (read each quant.sf's NumReads, build the matrix, normalize, "
-    "compare groups) and report the result. Only defer if the data is genuinely missing."
+    "compare groups) and report the result. Only defer if the data is genuinely missing. "
+    "FIGURES — publication quality: draw a plot ONLY when you have real computed values "
+    "(NEVER an empty or placeholder figure with no data). Begin figure code with: "
+    "import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt; "
+    "plt.rcParams.update({'savefig.dpi':300,'figure.dpi':150,'figure.figsize':(6,4),"
+    "'font.size':11,'font.family':'sans-serif','axes.titlesize':12,'axes.titleweight':'bold',"
+    "'axes.labelsize':11,'axes.spines.top':False,'axes.spines.right':False,'legend.frameon':False,"
+    "'xtick.direction':'out','ytick.direction':'out'}); "
+    "plot the ACTUAL data with informative axis labels (include units), a concise title, a legend "
+    "only if needed, and a restrained palette; then savefig(path, dpi=300, bbox_inches='tight'). "
+    "Add the saved PNG path to the result's 'figures' list."
 )
 
 # What the executor can actually run.
