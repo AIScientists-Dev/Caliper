@@ -161,6 +161,17 @@ async def login(request: Request):
     return JSONResponse({"ok": False}, status_code=401)
 
 
+@app.post("/api/logout")
+def logout(request: Request):
+    tok = request.cookies.get("caliper_session")
+    if tok:
+        _SESSIONS.pop(tok, None)
+        log_access(client_ip(request), "logout", True, _SESSIONS.get(tok, ""))
+    r = JSONResponse({"ok": True})
+    r.delete_cookie("caliper_session")
+    return r
+
+
 @app.get("/api/branding")
 def branding():
     return {"auth": _auth_configured()}  # agnostic: no lab identity revealed pre-login
@@ -444,7 +455,16 @@ def favicon():
 
 
 @app.get("/", response_class=HTMLResponse)
-def index():
+def landing():
+    # public marketing landing; falls back to the app if landing.html isn't deployed
+    p = os.path.join(HERE, "static", "landing.html")
+    target = p if os.path.exists(p) else os.path.join(HERE, "static", "index.html")
+    with open(target) as f:
+        return f.read()
+
+
+@app.get("/app", response_class=HTMLResponse)
+def app_page():
     with open(os.path.join(HERE, "static", "index.html")) as f:
         return f.read()
 

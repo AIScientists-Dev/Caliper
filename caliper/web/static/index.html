@@ -242,6 +242,16 @@
   <div id="sessions"></div>
   <a class="ghlink" href="https://github.com/AIScientists-Dev/caliper" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" style="fill:currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.2 3.44 9.6 8.21 11.16.6.11.82-.25.82-.56 0-.27-.01-1.01-.02-1.99-3.34.71-4.04-1.59-4.04-1.59-.55-1.37-1.34-1.74-1.34-1.74-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.22 1.84 1.22 1.07 1.81 2.81 1.29 3.5.99.11-.77.42-1.29.76-1.59-2.67-.3-5.47-1.32-5.47-5.86 0-1.29.47-2.35 1.24-3.18-.13-.3-.54-1.51.11-3.15 0 0 1.01-.32 3.3 1.21.96-.26 1.98-.39 3-.4 1.02.01 2.04.14 3 .4 2.29-1.53 3.3-1.21 3.3-1.21.65 1.64.24 2.85.12 3.15.77.83 1.23 1.89 1.23 3.18 0 4.55-2.81 5.56-5.49 5.85.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.28 0 .32.21.69.83.57C20.57 21.88 24 17.49 24 12.29 24 5.78 18.63.5 12 .5z"/></svg> Open source on GitHub</a>
   <div class="tagline">An analyst that knows when to trust itself.</div>
+  <div id="acct" style="border-top:1px solid var(--line);padding-top:8px;margin-top:6px;position:relative">
+    <div id="acctmenu" style="display:none;position:absolute;bottom:48px;left:0;right:0;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(28,26,21,.16);z-index:6">
+      <button onclick="doLogout()" style="width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text);padding:9px 10px;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:13px;text-align:left"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Log out</button>
+    </div>
+    <button onclick="toggleAcct(event)" title="Account" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:6px 4px;border-radius:7px">
+      <span id="sideAva" style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600">··</span>
+      <span id="sideEmail" style="flex:1;text-align:left;font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">account</span>
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--mut);fill:none;stroke-width:1.6;flex:0 0 16px"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"/></svg>
+    </button>
+  </div>
 </div>
 
 <div id="main">
@@ -370,7 +380,23 @@ async function playSecureLogin(){
   $('scn2').classList.add('locked'); if($('scbanner'))$('scbanner').classList.add('show');
   cap('Secure.','channel established end-to-end');
 }
-function doConnect(){ $('overlay').style.display='none'; loadSessions(); }
+function doConnect(){ $('overlay').style.display='none'; loadSessions(); loadAccount(); }
+function toggleAcct(e){ if(e)e.stopPropagation(); const m=$('acctmenu'); if(m) m.style.display=(m.style.display==='block'?'none':'block'); }
+document.addEventListener('click',function(){ const m=$('acctmenu'); if(m) m.style.display='none'; });
+async function doLogout(){
+  try{ await fetch('/api/logout',{method:'POST'}); }catch(e){}
+  SID=null; SELECTED=[];
+  const th=$('thread'); if(th) th.innerHTML='';
+  const sx=$('sessions'); if(sx) sx.innerHTML='';
+  const m=$('acctmenu'); if(m) m.style.display='none';
+  showSignin();
+}
+async function loadAccount(){
+  try{ const w=await(await api('/api/whoami')).json(); const em=w.email||'';
+    if($('sideEmail')) $('sideEmail').textContent=em||'Signed in';
+    if($('sideAva')) $('sideAva').textContent=(em.replace(/@.*/,'').replace(/[^a-zA-Z0-9]/g,'').slice(0,2)||'··').toUpperCase();
+  }catch(e){}
+}
 function backToSignin(){ $('connect').style.display='none'; $('signin').style.display='block'; }
 
 function useExample(btn){box.value=btn.textContent.trim();box.dispatchEvent(new Event('input'));send();}
@@ -631,7 +657,7 @@ const MM='<svg class="ic spark" viewBox="0 0 105 80"><path d="M20.5751 29.3744C2
 function paintLogos(){document.querySelectorAll('.brand .dot,.lbrand .dot,.dotbox').forEach(e=>{e.innerHTML=MM;});}
 async function init(){
   // agnostic landing: nothing about the lab is shown until after sign-in.
-  try{ await api('/api/whoami'); $('overlay').style.display='none'; loadSessions(); }
+  try{ await api('/api/whoami'); $('overlay').style.display='none'; loadSessions(); loadAccount(); }
   catch(e){ /* 401 -> api() shows the overlay; the sign-in screen is the default */ }
 }
 paintLogos();
