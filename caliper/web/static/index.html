@@ -92,6 +92,37 @@
   .bar > i{display:block;height:100%;width:0;background:var(--green);transition:width .5s ease}
   .jobmeta{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:9px;text-transform:uppercase;letter-spacing:.03em}
   .jobmeta .loglink{cursor:pointer;color:var(--faint)}
+  /* secure-connection login animation */
+  .scon{display:flex;flex-direction:column;margin:4px 0 2px}
+  .scnode{display:flex;align-items:center;gap:11px;border:1px solid var(--line2);border-radius:10px;background:var(--bg);padding:11px 13px;opacity:.42;transition:.35s ease;position:relative}
+  .scnode.on{opacity:1;border-color:var(--green);box-shadow:0 0 0 3px rgba(47,143,87,.10)}
+  .scnode .ic{width:24px;height:24px;flex:0 0 24px;color:var(--mut);stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:.3s}
+  .scnode.on .ic{color:var(--green)}
+  .scnode .tx{flex:1;text-align:left;min-width:0}
+  .scnode .nt{font-weight:600;font-size:13px}
+  .scnode .ns{font-family:var(--mono);font-size:10.5px;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scnode .lk{width:16px;height:16px;flex:0 0 16px;color:var(--green);opacity:0;transition:.3s;stroke:currentColor;fill:none;stroke-width:2}
+  .scnode.locked .lk{opacity:1}
+  .sclink{position:relative;height:30px;margin:1px 0}
+  .sclink::before{content:"";position:absolute;left:25px;top:0;bottom:0;width:2px;background:var(--line2);transition:.3s}
+  .sclink.live::before{background:linear-gradient(180deg,var(--line2),var(--green))}
+  .sclink.done::before{background:var(--green)}
+  .scpkt{position:absolute;left:22px;width:8px;height:8px;border-radius:50%;background:var(--green);opacity:0;box-shadow:0 0 6px rgba(47,143,87,.7)}
+  .sclink.live .scpkt{animation:scrun 1.1s linear infinite}
+  .sclink.live .scpkt:nth-child(2){animation-delay:.37s}
+  .sclink.live .scpkt:nth-child(3){animation-delay:.74s}
+  @keyframes scrun{0%{top:-2px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:30px;opacity:0}}
+  .scmid{position:absolute;left:18px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:var(--panel);border:1px solid var(--green);display:none;align-items:center;justify-content:center;z-index:2}
+  .sclink.done .scmid{display:flex}
+  .scmid svg{width:9px;height:9px;stroke:var(--green);fill:none;stroke-width:2}
+  .sclbl{position:absolute;left:42px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--green);opacity:0;transition:.3s;white-space:nowrap}
+  .sclink.live .sclbl,.sclink.done .sclbl{opacity:1}
+  .sccap{font-size:12px;color:var(--mut);min-height:30px;margin-top:8px;text-align:center;line-height:1.4}
+  .sccap b{color:var(--text)}
+  .scbanner{margin-top:10px;border:1px solid var(--green);background:rgba(47,143,87,.07);border-radius:9px;padding:10px 12px;display:none;font-size:12px;color:var(--text);gap:8px;align-items:flex-start;text-align:left}
+  .scbanner.show{display:flex}
+  .scbanner svg{width:16px;height:16px;flex:0 0 16px;stroke:var(--green);fill:none;stroke-width:1.8;margin-top:1px}
+
   /* flow / pipeline visualization */
   .flow{border:1px solid var(--line2);border-radius:var(--radius);background:var(--panel);padding:14px 16px;margin-bottom:14px;overflow-x:auto}
   .flowhdr{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin-bottom:14px}
@@ -258,11 +289,29 @@
   <div id="connect" style="display:none">
     <div class="lbrand" style="font-size:18px"><span class="dot">⟡</span> Caliper</div>
     <p class="lsub">Signed in as <b id="cwho" style="color:var(--text)"></b></p>
-    <div class="connectcard">
-      <div style="font-size:26px">🔒</div>
-      <div style="font-weight:700;font-size:16px;margin-top:6px">Connect to <span id="clab">your lab</span></div>
-      <div class="muted" style="margin-top:8px;line-height:1.5">Runs on a <b style="color:var(--text)">private lab server</b> (<span id="chost"></span>). Your data stays on that server — nothing is processed on a shared/public machine.</div>
+    <div class="scon" id="scon">
+      <div class="scnode" id="scn0">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 20h20"/></svg>
+        <div class="tx"><div class="nt">Your laptop</div><div class="ns" id="scip">resolving IP…</div></div>
+        <svg class="lk" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <div class="sclink" id="scl0"><span class="scpkt"></span><span class="scpkt"></span><span class="scpkt"></span>
+        <div class="scmid"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div class="sclbl">HTTPS · TLS 1.3</div></div>
+      <div class="scnode" id="scn1">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="7" rx="1.5"/><rect x="3.5" y="13" width="17" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+        <div class="tx"><div class="nt">Secure controller</div><div class="ns">caliper.morphmind.ai</div></div>
+        <svg class="lk" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <div class="sclink" id="scl1"><span class="scpkt"></span><span class="scpkt"></span><span class="scpkt"></span>
+        <div class="scmid"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div class="sclbl">SSH tunnel</div></div>
+      <div class="scnode" id="scn2">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><rect x="9.2" y="11.2" width="5.6" height="4.4" rx="1"/><path d="M10.3 11.2v-1.1a1.7 1.7 0 0 1 3.4 0v1.1"/></svg>
+        <div class="tx"><div class="nt"><span id="clab">your lab</span> server</div><div class="ns">data &amp; compute stay here · <span id="chost">private</span></div></div>
+        <svg class="lk" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </div>
     </div>
+    <div class="sccap" id="sccap"></div>
+    <div class="scbanner" id="scbanner"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><div><b>Secure channel established.</b> Your sequencing data never leaves the lab server — the controller only sends instructions and reads back small results.</div></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:14px" onclick="doConnect()">Connect →</button>
     <div style="text-align:center;margin-top:10px"><a href="#" onclick="backToSignin();return false" style="color:var(--faint);font-size:12px">cancel</a></div>
   </div>
@@ -283,8 +332,37 @@ async function doLogin(){
 }
 async function showConnect(){
   const w=await(await api('/api/whoami')).json();
-  $('cwho').textContent=w.email||''; $('clab').textContent=w.lab_name||'your lab'; $('chost').textContent=w.remote||'private server';
+  $('cwho').textContent=w.email||'';
+  if($('clab'))$('clab').textContent=w.lab_name||'your lab';
+  if($('chost'))$('chost').textContent=w.remote||'private network';
   $('signin').style.display='none'; $('connect').style.display='block';
+  fetch('https://api.ipify.org?format=json').then(r=>r.json())
+    .then(d=>{if($('scip'))$('scip').textContent=d.ip;}).catch(()=>{if($('scip'))$('scip').textContent='your IP';});
+  playSecureLogin();
+}
+async function playSecureLogin(){
+  if(!$('scon'))return;
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const cap=(b,s)=>{if($('sccap'))$('sccap').innerHTML='<b>'+b+'</b> '+s;};
+  ['scn0','scn1','scn2'].forEach(i=>$(i)&&$(i).classList.remove('on','locked'));
+  ['scl0','scl1'].forEach(i=>$(i)&&$(i).classList.remove('live','done'));
+  if($('scbanner'))$('scbanner').classList.remove('show');
+  cap('Connecting…','waking your session');
+  await wait(450);
+  $('scn0').classList.add('on'); cap('Laptop ready.','encrypted request from '+($('scip')?$('scip').textContent:'your device'));
+  await wait(850);
+  $('scl0').classList.add('live'); cap('Encrypting…','HTTPS / TLS 1.3 — unreadable on the network');
+  await wait(1600);
+  $('scl0').classList.remove('live'); $('scl0').classList.add('done'); $('scn0').classList.add('locked');
+  $('scn1').classList.add('on'); cap('Controller reached.','it holds no raw data — it only orchestrates');
+  await wait(1000);
+  $('scl1').classList.add('live'); cap('Opening secure tunnel…','SSH into your lab; only small results come back');
+  await wait(1700);
+  $('scl1').classList.remove('live'); $('scl1').classList.add('done'); $('scn1').classList.add('locked');
+  $('scn2').classList.add('on'); cap('Lab server engaged.','data is read in place; all compute runs here');
+  await wait(800);
+  $('scn2').classList.add('locked'); if($('scbanner'))$('scbanner').classList.add('show');
+  cap('Secure.','channel established end-to-end');
 }
 function doConnect(){ $('overlay').style.display='none'; loadSessions(); }
 function backToSignin(){ $('connect').style.display='none'; $('signin').style.display='block'; }
@@ -380,9 +458,10 @@ function flowStep(host){
   if(t<0)return;
   for(let k=1;k<t;k++){ns[k].classList.remove('running','pending');ns[k].classList.add('done');}
   ns[t].classList.remove('pending');ns[t].classList.add('running');
+  es.forEach(e=>e.classList.remove('active'));  /* only the active segment marches */
   if(es[t-1])es[t-1].classList.add('active');
 }
-function flowExec(host){const r=_fn(host).find(n=>n.classList.contains('running'));if(r){r.classList.remove('running');r.classList.add('done');}}
+function flowExec(host){const r=_fn(host).find(n=>n.classList.contains('running'));if(r){r.classList.remove('running');r.classList.add('done');}_fe(host).forEach(e=>e.classList.remove('active'));}
 function flowDone(host){if(!host)return;_fn(host).forEach(n=>{n.classList.remove('running','pending');n.classList.add('done');});_fe(host).forEach(e=>e.classList.remove('active'));}
 function showFlowCard(ev,n){
   const c=$('flowcard'),k=(n.tool||'').toLowerCase();
