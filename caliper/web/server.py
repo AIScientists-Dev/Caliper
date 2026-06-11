@@ -41,6 +41,30 @@ DATA_ROOT = os.path.realpath(os.environ.get("CALIPER_DATA_ROOT", os.getcwd()))
 WORKSPACE = os.path.realpath(get_workspace() or os.path.join(os.getcwd(), "caliper_workspace"))
 PACK = os.environ.get("CALIPER_PACK", "bio")
 _SESSIONS: dict = {}        # token -> email (who is logged in)
+_SESSIONS_FILE = os.path.join(WORKSPACE, ".auth_sessions.json")
+
+
+def _load_sessions():
+    """Keep users signed in across restarts/deploys (tokens persist to disk)."""
+    try:
+        with open(_SESSIONS_FILE) as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            _SESSIONS.update(data)
+    except (OSError, ValueError):
+        pass
+
+
+def _save_sessions():
+    try:
+        with open(_SESSIONS_FILE, "w") as f:
+            json.dump(_SESSIONS, f)
+        os.chmod(_SESSIONS_FILE, 0o600)
+    except OSError:
+        pass
+
+
+_load_sessions()
 _HISTORY: dict = {}         # session_id -> {"title":..., "ts":..., "messages":[...]}
 ACCESS_LOG = deque(maxlen=1000)   # recent login events {ts, ip, email, event, ok}
 
@@ -164,6 +188,7 @@ async def login(request: Request):
     if _check_creds(email, body.get("password", "")):
         tok = secrets.token_urlsafe(24)
         _SESSIONS[tok] = email or "user"
+        _save_sessions()
         _FAILS.pop(ip, None)
         log_access(ip, "login", True, email)
         secure = request.headers.get("x-forwarded-proto", "http") == "https"
@@ -180,8 +205,9 @@ async def login(request: Request):
 def logout(request: Request):
     tok = request.cookies.get("caliper_session")
     if tok:
-        _SESSIONS.pop(tok, None)
-        log_access(client_ip(request), "logout", True, _SESSIONS.get(tok, ""))
+        who = _SESSIONS.pop(tok, "")
+        _save_sessions()
+        log_access(client_ip(request), "logout", True, who)
     r = JSONResponse({"ok": True})
     r.delete_cookie("caliper_session")
     return r
