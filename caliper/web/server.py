@@ -43,6 +43,21 @@ PACK = os.environ.get("CALIPER_PACK", "bio")
 _SESSIONS: dict = {}        # token -> email (who is logged in)
 _HISTORY: dict = {}         # session_id -> {"title":..., "ts":..., "messages":[...]}
 ACCESS_LOG = deque(maxlen=1000)   # recent login events {ts, ip, email, event, ok}
+
+
+def _load_access_log():
+    """Reload persisted login events so the access log survives restarts/deploys."""
+    try:
+        with open(os.path.join(WORKSPACE, "access.log")) as f:
+            for line in f.read().splitlines()[-ACCESS_LOG.maxlen:]:
+                line = line.strip()
+                if line:
+                    ACCESS_LOG.append(json.loads(line))
+    except (OSError, ValueError):
+        pass
+
+
+_load_access_log()
 _FAILS: dict = {}           # ip -> (count, last_ts)   (brute-force lockout)
 _LOCK_AFTER, _LOCK_WINDOW = 5, 300   # >=5 fails within 300s -> locked for 300s
 
