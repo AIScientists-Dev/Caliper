@@ -46,7 +46,7 @@ ACCESS_LOG = deque(maxlen=1000)   # recent login events {ts, ip, email, event, o
 _FAILS: dict = {}           # ip -> (count, last_ts)   (brute-force lockout)
 _LOCK_AFTER, _LOCK_WINDOW = 5, 300   # >=5 fails within 300s -> locked for 300s
 
-LAB_NAME = os.environ.get("CALIPER_LAB_NAME", "Chong's Lab")
+LAB_NAME = os.environ.get("CALIPER_LAB_NAME", "Chong's team")
 try:
     # CALIPER_USERS: JSON {email: password}. Use a DEDICATED app password per user —
     # never anyone's institutional/UMN password.
