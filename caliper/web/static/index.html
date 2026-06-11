@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script>(function(){try{if(localStorage.getItem('caliper-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <style>
   :root{
     --bg:#ece9e0; --panel:#f5f3ec; --panel2:#e4e1d6; --line:#d7d3c5; --line2:#c5c1b1;
@@ -17,6 +18,18 @@
     --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
     --sans:"IBM Plex Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;
   }
+  :root[data-theme="dark"]{
+    --bg:#15130e; --panel:#1d1a14; --panel2:#26221a; --line:#2c281f; --line2:#3a352a;
+    --text:#ece9e0; --mut:#a7a092; --faint:#7b7466;
+    --accent:#ece9e0; --accent-fg:#17150f; --green:#46b277; --amber:#caa24a; --red:#d9776b;
+    --mint:#46b277; --mint-d:#46b277;
+  }
+  .mi{width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text);padding:9px 10px;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:13px;text-align:left}
+  .mi:hover{background:var(--panel2)}
+  .mi svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 16px}
+  .sin{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:9px 11px;font-size:13.5px;font-family:var(--sans);outline:none}
+  .sin:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(47,143,87,.12)}
+  .slabel{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:11px 0 5px}
   *{box-sizing:border-box} html,body{height:100%}
   body{margin:0;display:flex;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
   ::-webkit-scrollbar{width:10px;height:10px} ::-webkit-scrollbar-thumb{background:#cfcabb;border-radius:6px}
@@ -238,13 +251,16 @@
   <div class="brand"><span class="dot"><svg class="ic spark" viewBox="0 0 24 24"><path d="M12 2l1.7 7.3L21 11l-7.3 1.7L12 20l-1.7-7.3L3 11l7.3-1.7z"/></svg></span> Caliper <small>v0.1</small></div>
   <button class="btn primary" onclick="newChat()"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4l9.5-9.5-4-4L4 16z"/><path d="M14.5 6.5l3 3"/></svg> New analysis</button>
   <button class="btn" onclick="toggleDrawer()"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7a1 1 0 011-1h5l2 2h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg> Browse &amp; select data</button>
-  <button class="btn" onclick="showLog()"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.2-3 7.3-7 8-4-.7-7-3.8-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg> Access log</button>
   <div id="sessions"></div>
   <a class="ghlink" href="https://github.com/AIScientists-Dev/caliper" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" style="fill:currentColor"><path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.2 3.44 9.6 8.21 11.16.6.11.82-.25.82-.56 0-.27-.01-1.01-.02-1.99-3.34.71-4.04-1.59-4.04-1.59-.55-1.37-1.34-1.74-1.34-1.74-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.22 1.84 1.22 1.07 1.81 2.81 1.29 3.5.99.11-.77.42-1.29.76-1.59-2.67-.3-5.47-1.32-5.47-5.86 0-1.29.47-2.35 1.24-3.18-.13-.3-.54-1.51.11-3.15 0 0 1.01-.32 3.3 1.21.96-.26 1.98-.39 3-.4 1.02.01 2.04.14 3 .4 2.29-1.53 3.3-1.21 3.3-1.21.65 1.64.24 2.85.12 3.15.77.83 1.23 1.89 1.23 3.18 0 4.55-2.81 5.56-5.49 5.85.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.28 0 .32.21.69.83.57C20.57 21.88 24 17.49 24 12.29 24 5.78 18.63.5 12 .5z"/></svg> Open source on GitHub</a>
   <div class="tagline">An analyst that knows when to trust itself.</div>
   <div id="acct" style="border-top:1px solid var(--line);padding-top:8px;margin-top:6px;position:relative">
     <div id="acctmenu" style="display:none;position:absolute;bottom:48px;left:0;right:0;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(28,26,21,.16);z-index:6">
-      <button onclick="doLogout()" style="width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text);padding:9px 10px;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:13px;text-align:left"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Log out</button>
+      <button class="mi" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg> <span id="themeLabel">Dark mode</span></button>
+      <button class="mi" onclick="$('acctmenu').style.display='none';showLog()"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.2-3 7.3-7 8-4-.7-7-3.8-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg> Access log</button>
+      <button class="mi" onclick="$('acctmenu').style.display='none';openSupport()"><svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"/><path d="M3.5 6.5l8.5 6 8.5-6"/></svg> Contact support</button>
+      <div style="height:1px;background:var(--line);margin:5px 6px"></div>
+      <button class="mi" onclick="doLogout()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Log out</button>
     </div>
     <button onclick="toggleAcct(event)" title="Account" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:6px 4px;border-radius:7px">
       <span id="sideAva" style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600">··</span>
@@ -288,6 +304,27 @@
   <div style="background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:22px;width:580px;max-height:72vh;overflow:auto">
     <h3 style="color:var(--mint);margin:0 0 12px;display:flex;justify-content:space-between">Login access log <span style="cursor:pointer;color:var(--faint)" onclick="document.getElementById('logmodal').style.display='none'">✕</span></h3>
     <table id="logtable"><thead><tr><th>time</th><th>email</th><th>IP address</th><th>event</th><th>result</th></tr></thead><tbody></tbody></table>
+  </div>
+</div>
+
+<div id="supportmodal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9">
+  <div style="background:var(--panel);border:1px solid var(--line2);border-radius:14px;padding:22px;width:460px;max-width:92vw;max-height:88vh;overflow:auto">
+    <h3 style="margin:0 0 4px;display:flex;justify-content:space-between;align-items:center;color:var(--text)">Contact support <span style="cursor:pointer;color:var(--faint)" onclick="closeSupport()">&#10005;</span></h3>
+    <div id="supportform-wrap">
+      <p style="color:var(--mut);font-size:13px;margin:0 0 6px">We&#39;ll reply by email &middot; goes to support@morphmind.ai.</p>
+      <form id="supportform" onsubmit="submitSupport(event);return false;">
+        <label class="slabel">Your email</label><input class="sin" name="email" type="email" required placeholder="you@university.edu">
+        <label class="slabel">Institution / Lab</label><input class="sin" name="institution" placeholder="optional">
+        <label class="slabel">How can we help?</label><textarea class="sin" name="message" required rows="4" placeholder="Describe the issue or question…" style="resize:vertical;min-height:90px"></textarea>
+        <div style="display:flex;gap:9px;margin-top:14px"><button type="submit" class="btn primary" style="justify-content:center">Send</button><button type="button" class="btn" onclick="closeSupport()">Cancel</button></div>
+      </form>
+    </div>
+    <div id="supportthanks" style="display:none;text-align:center;padding:18px 6px">
+      <div style="font-size:30px;color:var(--green)">&#10003;</div>
+      <h3 style="margin:10px 0 6px;color:var(--text)">Thanks &mdash; message sent</h3>
+      <p style="color:var(--mut);font-size:13px;margin:0 0 14px">Our team will reply by email, usually within a business day.</p>
+      <button class="btn primary" style="justify-content:center" onclick="closeSupport()">Close</button>
+    </div>
   </div>
 </div>
 
@@ -392,6 +429,23 @@ async function loadAccount(){
     if($('sideEmail')) $('sideEmail').textContent=em||'Signed in';
     if($('sideAva')) $('sideAva').textContent=(em.replace(/@.*/,'').replace(/[^a-zA-Z0-9]/g,'').slice(0,2)||'··').toUpperCase();
   }catch(e){}
+}
+const SB_URL="https://tlcbratfrpbybttcjijv.supabase.co";
+const SB_KEY="sb_publishable_5UT5W53GmgWDfsRkUoa87w_poAmCWf4";
+function applyTheme(t){ const dark=t==='dark'; if(dark)document.documentElement.setAttribute('data-theme','dark'); else document.documentElement.removeAttribute('data-theme'); const l=$('themeLabel'); if(l)l.textContent=dark?'Light mode':'Dark mode'; }
+function toggleTheme(){ const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; try{localStorage.setItem('caliper-theme',next);}catch(e){} applyTheme(next); }
+try{ applyTheme(localStorage.getItem('caliper-theme')||'light'); }catch(e){ applyTheme('light'); }
+function openSupport(){ const w=$('supportmodal'); if(!w)return; $('supportform-wrap').style.display='block'; $('supportthanks').style.display='none'; const f=$('supportform'); if(f){ const em=($('sideEmail')&&$('sideEmail').textContent)||''; const ef=f.querySelector('[name=email]'); if(ef&&em.indexOf('@')>0)ef.value=em; } w.style.display='flex'; }
+function closeSupport(){ const w=$('supportmodal'); if(w)w.style.display='none'; }
+function submitSupport(e){ e.preventDefault(); const f=e.target; if(f.reportValidity&&!f.reportValidity())return false;
+  const v=n=>((f.querySelector('[name="'+n+'"]')||{}).value||'').trim();
+  const p={source:'support', name:(v('email').split('@')[0]||'user'), email:v('email'), role:'existing user',
+    institution:v('institution'), research_area:'', team_size:'', deploy:'', today:'',
+    message:('[Existing user · support] '+v('message')).slice(0,5000),
+    user_agent:(navigator.userAgent||'').slice(0,500), referrer:'caliper-app'};
+  try{fetch(SB_URL+'/rest/v1/caliper_leads',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(p)}).catch(()=>{});}catch(_){}
+  $('supportform-wrap').style.display='none'; $('supportthanks').style.display='block';
+  return false;
 }
 function backToSignin(){ $('connect').style.display='none'; $('signin').style.display='block'; }
 
