@@ -385,11 +385,7 @@ function toggleAcct(e){ if(e)e.stopPropagation(); const m=$('acctmenu'); if(m) m
 document.addEventListener('click',function(){ const m=$('acctmenu'); if(m) m.style.display='none'; });
 async function doLogout(){
   try{ await fetch('/api/logout',{method:'POST'}); }catch(e){}
-  SID=null; SELECTED=[];
-  const th=$('thread'); if(th) th.innerHTML='';
-  const sx=$('sessions'); if(sx) sx.innerHTML='';
-  const m=$('acctmenu'); if(m) m.style.display='none';
-  showSignin();
+  window.location.href='/';   // back to the public homepage
 }
 async function loadAccount(){
   try{ const w=await(await api('/api/whoami')).json(); const em=w.email||'';
