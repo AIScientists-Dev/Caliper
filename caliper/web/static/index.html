@@ -80,11 +80,17 @@
   .answer code{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:12.5px}
   .review{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
   .review .q{color:var(--text);margin-bottom:10px}
-  .fbtns{display:flex;gap:8px}
-  .fb{border:1px solid var(--line2);background:var(--panel);color:var(--text);border-radius:6px;padding:7px 14px;cursor:pointer;font-size:13px}
-  .fb:hover{border-color:var(--text)} .fb.no:hover{border-color:var(--red);color:var(--red)}
-  .fbnote{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:7px;color:var(--text);padding:9px 11px;font-size:13px;line-height:1.5;margin-bottom:9px;resize:none;font-family:var(--sans);outline:none;scrollbar-width:none}
-  .fbnote:focus{border-color:var(--text)} .fbnote::-webkit-scrollbar{display:none}
+  .fbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .fb{border:1px solid var(--line2);background:var(--panel);color:var(--text);border-radius:7px;padding:8px 15px;cursor:pointer;font-size:13px;font-weight:500;transition:.14s ease}
+  .fb:hover{border-color:var(--text);background:var(--panel2)}
+  .fb.no:hover{border-color:var(--red);color:var(--red);background:var(--panel)}
+  .fb.send{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+  .fb.send:hover{background:var(--accent);color:var(--accent-fg);opacity:.88}
+  .fb.skip{border-color:transparent;background:transparent;color:var(--mut);padding:8px 6px}
+  .fb.skip:hover{color:var(--text);background:transparent;text-decoration:underline}
+  .fbnote{width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13.5px;line-height:1.55;margin-bottom:10px;resize:none;font-family:var(--sans);outline:none;scrollbar-width:none;min-height:42px;transition:border-color .14s,box-shadow .14s}
+  .fbnote::placeholder{color:var(--faint)}
+  .fbnote:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(47,143,87,.10)} .fbnote::-webkit-scrollbar{display:none}
   .stdout{background:#22201a;border:1px solid var(--line2);border-radius:6px;padding:8px;font-family:var(--mono);font-size:11px;color:#cfe6cf;max-height:150px;overflow:auto;white-space:pre-wrap;margin-top:6px}
   .jobcard{border:1px solid var(--line2);border-radius:var(--radius);background:var(--panel);padding:16px;margin-top:4px}
   .jobtitle{font-weight:600;font-size:14px;margin-bottom:12px}
@@ -441,7 +447,7 @@ function flowNode(n){
   const title=n.type==='data'?'Your data':(n.type==='result'?'Result':(info.t||n.tool||'step'));
   const sub=n.type==='data'?'lab server':(n.type==='result'?'+ trust':'tool');
   d.innerHTML=icon+'<div class="fl-title">'+esc(title)+'</div><div class="fl-sub">'+esc(sub)+'</div>';
-  d.onmouseenter=ev=>showFlowCard(ev,n); d.onmouseleave=hideFlowCard;
+  d.onmouseenter=ev=>showFlowCard(ev,n); d.onmouseleave=scheduleHideCard;
   return d;
 }
 function flowEdge(){const e=el('flowedge');e.innerHTML='<svg viewBox="0 0 32 12"><path class="eline" d="M0 6H24"/><path class="ehead" d="M24 2l6 4-6 4z"/></svg>';return e;}
@@ -463,18 +469,22 @@ function flowStep(host){
 }
 function flowExec(host){const r=_fn(host).find(n=>n.classList.contains('running'));if(r){r.classList.remove('running');r.classList.add('done');}_fe(host).forEach(e=>e.classList.remove('active'));}
 function flowDone(host){if(!host)return;_fn(host).forEach(n=>{n.classList.remove('running','pending');n.classList.add('done');});_fe(host).forEach(e=>e.classList.remove('active'));}
+let _fcTimer;
 function showFlowCard(ev,n){
+  clearTimeout(_fcTimer);
   const c=$('flowcard'),k=(n.tool||'').toLowerCase();
   const info=n.type==='data'?{t:'Your data',d:'The sequencing data on your private lab server — read in place, never moved off it.',u:'https://en.wikipedia.org/wiki/RNA-Seq'}
     :n.type==='result'?{t:'Result',d:'The findings, with a calibrated trust score so you know whether to rely on them.',u:''}
     :(TOOLDOC[k]||{t:n.tool,d:'A bioinformatics tool.',u:''});
   c.innerHTML='<div class="fc-t">'+esc(info.t)+'</div>'+esc(info.d)+(info.u?'<br><a href="'+info.u+'" target="_blank" rel="noopener">Learn more ↗</a>':'');
+  c.onmouseenter=()=>clearTimeout(_fcTimer); c.onmouseleave=scheduleHideCard;   /* keep open while pointer is on the card */
   const r=ev.currentTarget.getBoundingClientRect();
   c.style.display='block';
   c.style.left=Math.max(10,Math.min(r.left,window.innerWidth-275))+'px';
-  c.style.top=(r.bottom+8)+'px';
+  c.style.top=(r.bottom+6)+'px';
 }
-function hideFlowCard(){$('flowcard').style.display='none';}
+function scheduleHideCard(){clearTimeout(_fcTimer);_fcTimer=setTimeout(hideFlowCard,200);}  /* grace period to reach the card */
+function hideFlowCard(){clearTimeout(_fcTimer);$('flowcard').style.display='none';}
 function mdTables(s){
   const lines=s.split('\n'),out=[]; let i=0;
   const isRow=l=>/^\s*\|.*\|\s*$/.test(l), isSep=l=>/^\s*\|[\s:|-]+\|\s*$/.test(l);
@@ -503,6 +513,7 @@ function sendFeedback(row,correct,trust){
     +'<textarea class="fbnote" rows="2" placeholder="'+(correct?'e.g. matches my prior result; design is correct':'e.g. the ON/OFF conditions are swapped; missing replicates')+'"></textarea>'
     +'<div class="fbtns"><button class="fb send">Send</button><button class="fb skip">Skip</button></div>';
   const note=row.querySelector('.fbnote');note.focus();
+  const grow=()=>{note.style.height='auto';note.style.height=Math.min(note.scrollHeight,180)+'px';};note.oninput=grow;grow();
   const post=async(comment)=>{
     try{await api('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({correct:correct,trust:trust,comment:comment,session_id:SID})});}catch(err){}
