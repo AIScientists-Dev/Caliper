@@ -314,9 +314,16 @@
       <p style="color:var(--mut);font-size:13px;margin:0 0 6px">We&#39;ll reply by email &middot; goes to support@morphmind.ai.</p>
       <form id="supportform" onsubmit="submitSupport(event);return false;">
         <label class="slabel">Your email</label><input class="sin" name="email" type="email" required placeholder="you@university.edu">
+        <label class="slabel">Type</label>
+        <select class="sin" name="type" style="width:100%">
+          <option value="question">Question / help</option>
+          <option value="bug">Bug report</option>
+          <option value="feature">Feature request</option>
+        </select>
         <label class="slabel">Institution / Lab</label><input class="sin" name="institution" placeholder="optional">
         <label class="slabel">How can we help?</label><textarea class="sin" name="message" required rows="4" placeholder="Describe the issue or question…" style="resize:vertical;min-height:90px"></textarea>
         <div style="display:flex;gap:9px;margin-top:14px"><button type="submit" class="btn primary" style="justify-content:center">Send</button><button type="button" class="btn" onclick="closeSupport()">Cancel</button></div>
+        <p style="color:var(--mut);font-size:12px;margin:11px 0 0">Prefer email? <a href="#" onclick="emailSupport(event)" style="color:var(--green)">Write to support@morphmind.ai</a></p>
       </form>
     </div>
     <div id="supportthanks" style="display:none;text-align:center;padding:18px 6px">
@@ -441,12 +448,19 @@ function submitSupport(e){ e.preventDefault(); const f=e.target; if(f.reportVali
   const v=n=>((f.querySelector('[name="'+n+'"]')||{}).value||'').trim();
   const p={source:'support', name:(v('email').split('@')[0]||'user'), email:v('email'), role:'existing user',
     institution:v('institution'), research_area:'', team_size:'', deploy:'', today:'',
-    message:('[Existing user · support] '+v('message')).slice(0,5000),
+    message:('[Existing user · support · '+(v('type')||'question')+'] '+v('message')).slice(0,5000),
     user_agent:(navigator.userAgent||'').slice(0,500), referrer:'caliper-app'};
   try{fetch(SB_URL+'/rest/v1/caliper_leads',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(p)}).catch(()=>{});}catch(_){}
   $('supportform-wrap').style.display='none'; $('supportthanks').style.display='block';
   return false;
 }
+function emailSupport(e){ if(e&&e.preventDefault)e.preventDefault(); const f=$('supportform'); if(!f)return false;
+  const v=n=>((f.querySelector('[name="'+n+'"]')||{}).value||'').trim();
+  const type=v('type')||'question';
+  const subj='[Caliper · '+type+'] support from '+(v('email')||'user');
+  const body='Type: '+type+'\nEmail: '+v('email')+'\nInstitution: '+v('institution')+'\n\n'+v('message');
+  window.open('mailto:support@morphmind.ai?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank');
+  return false; }
 function backToSignin(){ $('connect').style.display='none'; $('signin').style.display='block'; }
 
 function useExample(btn){box.value=btn.textContent.trim();box.dispatchEvent(new Event('input'));send();}
