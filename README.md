@@ -4,7 +4,7 @@
 
 ### The research assistant that tells you when to trust it.
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Research%20%2F%20Non--Commercial-2f8f57.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
 [![Status](https://img.shields.io/badge/status-research%20preview-orange.svg)](#status--roadmap)
@@ -135,6 +135,9 @@ pack. See [`docs/DEVELOPERS.md`](docs/DEVELOPERS.md) for the architecture and th
 
 ## License
 
-Apache 2.0 — see [`LICENSE`](LICENSE). Caliper is an independent reimplementation; it
-reuses no third-party code verbatim. Prior art is credited in [`NOTICE`](NOTICE).
-Underlying domain tools carry their own licenses; review before commercial use.
+**MorphMind Research License v1.0** — see [`LICENSE`](LICENSE). Free for research and
+non-commercial use; **commercial use is reserved to AIScientists Inc. (dba MorphMind)** —
+contact [morphmind.ai](https://morphmind.ai) for a commercial license. Caliper is an
+independent, clean-room reimplementation; it reuses no third-party code verbatim. Prior
+art is credited in [`NOTICE`](NOTICE). Underlying domain tools carry their own licenses;
+review them before any deployment.

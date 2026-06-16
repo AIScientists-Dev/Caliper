@@ -1,7 +1,9 @@
 Caliper
-Copyright 2026 MorphMind, Inc.
+Copyright (c) 2026 AIScientists Inc. (dba MorphMind). All rights reserved.
 
-This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+This product is released under the MorphMind Research License, v1.0 (see LICENSE):
+free for research and non-commercial use; commercial use is reserved to MorphMind.
+For a commercial license, contact https://morphmind.ai .
 
 Caliper is an independent, clean-room reimplementation of a curated-tool + agent
 architecture. It does not incorporate source code from the projects below; they are
@@ -14,4 +16,4 @@ acknowledged as conceptual prior art that informed the design:
 The domain tools referenced by Caliper's packs (e.g. STAR, DESeq2, MACS2, Scanpy,
 Astropy, emcee) are separate works distributed under their own licenses. Caliper
 invokes them; it does not redistribute them. Review each tool's license before any
-commercial deployment.
+deployment.
