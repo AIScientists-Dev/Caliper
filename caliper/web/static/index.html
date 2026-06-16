@@ -194,6 +194,13 @@
   .row:hover{background:var(--panel2);color:var(--text)} .row.sel{color:var(--text);background:var(--panel2);font-weight:600}
   .row span{color:var(--faint);font-size:11px;font-family:var(--mono)}
   /* sign-in: full-screen split — form on the left, marketing hero on the right */
+  /* Neutral splash gate: covers everything until /whoami resolves, then we reveal app OR login —
+     so neither ever flashes before the other (robust even if the optimistic hint is stale). */
+  #authgate{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  #authgate.hide{display:none}
+  #authgate .gmark{display:inline-flex;align-items:center}
+  #authgate .gmark .ic.spark{width:38px;height:auto;color:var(--text);opacity:.92}
+  #authgate .spinner{width:16px;height:16px}
   /* Login shows by DEFAULT (so a logged-out visitor never flashes the app shell first).
      A returning, signed-in user gets the optimistic .authed hint and skips straight to the app. */
   #overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:stretch;z-index:9}
@@ -289,6 +296,8 @@
 </style>
 </head>
 <body>
+<!-- Neutral splash until auth is known — prevents any app-shell / login flash -->
+<div id="authgate"><span class="gmark dotbox"></span><div class="spinner"></div></div>
 <div id="topbar">
   <button id="burger" onclick="toggleSidebar()" aria-label="menu"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <div class="brand" style="padding:0;font-size:16px"><span class="dot"><svg class="ic spark" viewBox="0 0 24 24"><path d="M12 2l1.7 7.3L21 11l-7.3 1.7L12 20l-1.7-7.3L3 11l7.3-1.7z"/></svg></span> Caliper</div>
@@ -909,9 +918,10 @@ function paintLogos(){document.querySelectorAll('.brand .dot,.lbrand .dot,.dotbo
 async function init(){
   // agnostic landing: nothing about the lab is shown until after sign-in.
   try{ await api('/api/whoami'); document.documentElement.classList.add('authed'); try{localStorage.setItem('caliper-authed','1');}catch(e){} $('overlay').style.display='none'; loadSessions(); loadAccount(); }
-  catch(e){ /* 401 -> api() showed the overlay; clear the optimistic hint so we don't flash the app next time */
+  catch(e){ /* 401 -> api() showed the login overlay; clear the optimistic hint for next time */
     document.documentElement.classList.remove('authed'); try{localStorage.removeItem('caliper-authed');}catch(_){}
   }
+  finally{ const g=$('authgate'); if(g) g.classList.add('hide'); }   // reveal the resolved view (app OR login) — no flash between them
 }
 paintLogos();
 init();
