@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<script>(function(){try{if(localStorage.getItem('caliper-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<script>(function(){try{if(localStorage.getItem('caliper-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('caliper-authed')==='1')document.documentElement.classList.add('authed');}catch(e){}})();</script>
 <style>
   :root{
     --bg:#ece9e0; --panel:#f5f3ec; --panel2:#e4e1d6; --line:#d7d3c5; --line2:#c5c1b1;
@@ -194,7 +194,10 @@
   .row:hover{background:var(--panel2);color:var(--text)} .row.sel{color:var(--text);background:var(--panel2);font-weight:600}
   .row span{color:var(--faint);font-size:11px;font-family:var(--mono)}
   /* sign-in: full-screen split — form on the left, marketing hero on the right */
-  #overlay{position:fixed;inset:0;background:var(--bg);display:none;align-items:stretch;z-index:9}
+  /* Login shows by DEFAULT (so a logged-out visitor never flashes the app shell first).
+     A returning, signed-in user gets the optimistic .authed hint and skips straight to the app. */
+  #overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:stretch;z-index:9}
+  html.authed #overlay{display:none}
   #login{flex:1 1 50%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px 32px;background:var(--bg);min-width:0;overflow:auto}
   .lwrap{width:100%;max-width:362px}
   #login input{width:100%;padding:11px 12px 11px 38px;border-radius:8px;border:1px solid var(--line2);background:var(--panel);color:var(--text);margin-bottom:0;outline:none;font-family:var(--sans);font-size:14px}
@@ -555,7 +558,7 @@ function showSignin(){$('connect').style.display='none';$('signin').style.displa
 async function api(u,o){const r=await fetch(u,o);if(r.status===401){showSignin();throw new Error('auth');}return r;}
 async function doLogin(){
   const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value,password:$('pw').value})});
-  if(r.ok){ await showConnect(); } else $('loginerr').textContent='Incorrect email or password.';
+  if(r.ok){ try{localStorage.setItem('caliper-authed','1');}catch(e){} document.documentElement.classList.add('authed'); await showConnect(); } else $('loginerr').textContent='Incorrect email or password.';
 }
 function togglePw(btn){const i=$('pw');if(!i)return;i.type=i.type==='password'?'text':'password';btn.style.color=i.type==='text'?'var(--green)':'';}
 async function showConnect(){
@@ -597,7 +600,9 @@ function toggleAcct(e){ if(e)e.stopPropagation(); const m=$('acctmenu'); if(m) m
 document.addEventListener('click',function(){ const m=$('acctmenu'); if(m) m.style.display='none'; });
 async function doLogout(){
   try{ await fetch('/api/logout',{method:'POST'}); }catch(e){}
-  window.location.href='/';   // back to the public homepage
+  try{localStorage.removeItem('caliper-authed');}catch(_){}   // so the next visit shows login immediately, no app flash
+  document.documentElement.classList.remove('authed');
+  window.location.href='/';   // back to the login screen
 }
 async function loadAccount(){
   try{ const w=await(await api('/api/whoami')).json(); const em=w.email||'';
@@ -903,8 +908,10 @@ const MM='<svg class="ic spark" viewBox="0 0 105 80"><path d="M20.5751 29.3744C2
 function paintLogos(){document.querySelectorAll('.brand .dot,.lbrand .dot,.dotbox').forEach(e=>{e.innerHTML=MM;});}
 async function init(){
   // agnostic landing: nothing about the lab is shown until after sign-in.
-  try{ await api('/api/whoami'); $('overlay').style.display='none'; loadSessions(); loadAccount(); }
-  catch(e){ /* 401 -> api() shows the overlay; the sign-in screen is the default */ }
+  try{ await api('/api/whoami'); document.documentElement.classList.add('authed'); try{localStorage.setItem('caliper-authed','1');}catch(e){} $('overlay').style.display='none'; loadSessions(); loadAccount(); }
+  catch(e){ /* 401 -> api() showed the overlay; clear the optimistic hint so we don't flash the app next time */
+    document.documentElement.classList.remove('authed'); try{localStorage.removeItem('caliper-authed');}catch(_){}
+  }
 }
 paintLogos();
 init();
