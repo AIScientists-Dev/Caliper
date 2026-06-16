@@ -30,6 +30,9 @@
   .sin{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:9px 11px;font-size:13.5px;font-family:var(--sans);outline:none}
   .sin:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(47,143,87,.12)}
   .slabel{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:11px 0 5px}
+  .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}
+  .pgrid>div{min-width:0}
+  @media (max-width:560px){.pgrid{grid-template-columns:1fr}}
   *{box-sizing:border-box} html,body{height:100%}
   body{margin:0;display:flex;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
   ::-webkit-scrollbar{width:10px;height:10px} ::-webkit-scrollbar-thumb{background:#cfcabb;border-radius:6px}
@@ -377,6 +380,67 @@
   </div>
 </div>
 
+<!-- Pilot request — same form as the product homepage; backdrop click does NOT close (manual only) -->
+<div id="pilotmodal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:30;padding:18px">
+  <div style="background:var(--panel);border:1px solid var(--line2);border-radius:14px;padding:24px;width:580px;max-width:100%;max-height:90vh;overflow:auto">
+    <div id="pilotform-wrap">
+      <h3 style="margin:0 0 4px;display:flex;justify-content:space-between;align-items:center;color:var(--text);font-size:20px">Start your free 3-month pilot <span style="cursor:pointer;color:var(--faint);font-weight:400" onclick="closePilot()">&#10005;</span></h3>
+      <p style="color:var(--mut);font-size:13px;margin:0 0 14px;line-height:1.5">Already set up? Just sign in. Otherwise tell us a few details and we&#39;ll line up a short call to deploy your pilot.</p>
+      <form id="pilotform" onsubmit="submitPilot(event);return false;">
+        <input class="hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+        <div class="pgrid">
+          <div><label class="slabel">Name</label><input class="sin" name="name" required placeholder="Dr. Jane Smith"></div>
+          <div><label class="slabel">Institutional email</label><input class="sin" name="email" type="email" required placeholder="you@university.edu"></div>
+        </div>
+        <div class="pgrid">
+          <div><label class="slabel">Role</label>
+            <select class="sin" name="role" style="width:100%">
+              <option>Principal Investigator</option><option>Lab manager</option><option>Postdoc</option>
+              <option>Graduate student</option><option>Core facility director</option><option>Other</option>
+            </select>
+          </div>
+          <div><label class="slabel">Institution / Lab</label><input class="sin" name="institution" placeholder="Your university / lab"></div>
+        </div>
+        <div class="pgrid">
+          <div><label class="slabel">Research area &amp; assays</label><input class="sin" name="area" placeholder="bulk RNA-seq, single-cell, ChIP-seq …"></div>
+          <div><label class="slabel">Team size</label>
+            <select class="sin" name="team" style="width:100%">
+              <option>1 (just me)</option><option>2</option><option>3</option><option>4</option><option>5</option>
+              <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>More than 10</option>
+            </select>
+          </div>
+        </div>
+        <div class="pgrid">
+          <div><label class="slabel">Where would you run it?</label>
+            <select class="sin" name="deploy" style="width:100%">
+              <option>Our own lab server</option><option>Private cloud (managed for us)</option><option>Not sure yet — advise me</option>
+            </select>
+          </div>
+          <div><label class="slabel">How do you analyze data today?</label>
+            <select class="sin" name="today" style="width:100%">
+              <option>A core facility runs it</option><option>A bioinformatician on staff</option>
+              <option>A student who codes</option><option>We mostly struggle / do it by hand</option>
+            </select>
+          </div>
+        </div>
+        <label class="slabel">What would you like Caliper to do first?</label>
+        <textarea class="sin" name="message" rows="3" placeholder="e.g. We run RNA-seq every month and would like our students to do the differential expression themselves, with results we can trust." style="resize:vertical;min-height:74px"></textarea>
+        <div style="display:flex;gap:9px;margin-top:16px;align-items:center;flex-wrap:wrap">
+          <button type="submit" class="btn primary" style="justify-content:center">Send to our team →</button>
+          <button type="button" class="btn" onclick="closePilot()">Cancel</button>
+          <span style="color:var(--faint);font-size:12px">We reply within one business day.</span>
+        </div>
+      </form>
+    </div>
+    <div id="pilotthanks" style="display:none;text-align:center;padding:26px 8px">
+      <svg viewBox="0 0 24 24" style="width:42px;height:42px;stroke:var(--green);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <h3 style="font-size:20px;margin:14px 0 8px;color:var(--text)">Thank you &mdash; we&#39;ve got it.</h3>
+      <p style="color:var(--mut);font-size:13.5px;max-width:46ch;margin:0 auto 16px;line-height:1.6">Our team will reach out within one business day to set up your free 3-month pilot. Questions meanwhile? <a href="mailto:support@morphmind.ai" style="color:var(--green)">support@morphmind.ai</a></p>
+      <button class="btn primary" style="justify-content:center" onclick="closePilot()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div id="overlay">
  <div id="login">
   <!-- Step 1: anonymous sign-in — no lab is named here -->
@@ -401,8 +465,8 @@
     <button class="btn primary lprimary" onclick="doLogin()">Sign in →</button>
     <div id="loginerr" style="color:var(--red);font-size:12px;margin-top:9px;text-align:center"></div>
     <div class="ldiv">New to Caliper</div>
-    <p class="lcta">No workspace yet? <a href="mailto:support@morphmind.ai?subject=Caliper%20pilot%20request&body=Hi%20%E2%80%94%20we%27d%20like%20to%20start%20a%20Caliper%20pilot.%20Our%20lab%2Fteam%3A%20%0AAssays%2Ftools%20we%20use%3A%20%0A">Start a free pilot →</a></p>
-    <div class="llinkwrap"><a class="llink" href="https://morphmind.ai/products/caliper">What is Caliper? →</a></div>
+    <p class="lcta">No workspace yet? <a href="#" onclick="openPilot();return false;">Start a free pilot →</a></p>
+    <div class="llinkwrap"><a class="llink" href="https://morphmind.ai/products/caliper" target="_blank" rel="noopener">What is Caliper? →</a></div>
   </div>
   <!-- Step 2: reveal the destination (only after auth) and confirm the connection -->
   <div id="connect" class="lwrap" style="display:none">
@@ -546,6 +610,20 @@ const SB_KEY="sb_publishable_5UT5W53GmgWDfsRkUoa87w_poAmCWf4";
 function applyTheme(t){ const dark=t==='dark'; if(dark)document.documentElement.setAttribute('data-theme','dark'); else document.documentElement.removeAttribute('data-theme'); const l=$('themeLabel'); if(l)l.textContent=dark?'Light mode':'Dark mode'; }
 function toggleTheme(){ const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; try{localStorage.setItem('caliper-theme',next);}catch(e){} applyTheme(next); }
 try{ applyTheme(localStorage.getItem('caliper-theme')||'light'); }catch(e){ applyTheme('light'); }
+// Pilot request modal — same form/lead capture as the product homepage. Manual close only.
+function openPilot(){ const w=$('pilotmodal'); if(!w)return; $('pilotform-wrap').style.display='block'; $('pilotthanks').style.display='none'; const f=$('pilotform'); if(f){ const em=($('email')&&$('email').value)||''; const ef=f.querySelector('[name=email]'); if(ef&&!ef.value&&em.indexOf('@')>0)ef.value=em; } w.style.display='flex'; }
+function closePilot(){ const w=$('pilotmodal'); if(w)w.style.display='none'; }
+function submitPilot(e){ e.preventDefault(); const f=e.target; if(f.reportValidity&&!f.reportValidity())return false;
+  const v=n=>((f.querySelector('[name="'+n+'"]')||{}).value||'').trim();
+  if(v('company')){ $('pilotform-wrap').style.display='none'; $('pilotthanks').style.display='block'; return false; } // honeypot -> bot
+  const p={source:'caliper-signin', name:v('name'), email:v('email'), role:v('role'), institution:v('institution'),
+    research_area:v('area'), team_size:v('team'), deploy:v('deploy'), today:v('today'),
+    message:v('message').slice(0,5000), user_agent:(navigator.userAgent||'').slice(0,500),
+    referrer:(document.referrer||'caliper-signin').slice(0,500)};
+  try{fetch(SB_URL+'/rest/v1/caliper_leads',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(p)}).catch(()=>{});}catch(_){}
+  $('pilotform-wrap').style.display='none'; $('pilotthanks').style.display='block';
+  return false;
+}
 function openSupport(){ const w=$('supportmodal'); if(!w)return; $('supportform-wrap').style.display='block'; $('supportthanks').style.display='none'; const f=$('supportform'); if(f){ const em=($('sideEmail')&&$('sideEmail').textContent)||''; const ef=f.querySelector('[name=email]'); if(ef&&em.indexOf('@')>0)ef.value=em; } w.style.display='flex'; }
 function closeSupport(){ const w=$('supportmodal'); if(w)w.style.display='none'; }
 function submitSupport(e){ e.preventDefault(); const f=e.target; if(f.reportValidity&&!f.reportValidity())return false;
@@ -830,6 +908,7 @@ async function init(){
 }
 paintLogos();
 init();
+if(location.hash==='#pilot')openPilot();   // deep-link straight to the pilot form
 </script>
 </body>
 </html>
