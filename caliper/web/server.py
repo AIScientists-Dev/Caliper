@@ -496,11 +496,10 @@ def favicon():
 
 
 @app.get("/", response_class=HTMLResponse)
-def landing():
-    # public marketing landing; falls back to the app if landing.html isn't deployed
-    p = os.path.join(HERE, "static", "landing.html")
-    target = p if os.path.exists(p) else os.path.join(HERE, "static", "index.html")
-    with open(target) as f:
+def home():
+    # The marketing landing now lives on the homepage (morphmind.ai/products/caliper);
+    # this host goes straight to the secure workspace (login screen).
+    with open(os.path.join(HERE, "static", "index.html")) as f:
         return f.read()
 
 
