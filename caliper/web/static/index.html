@@ -242,8 +242,8 @@
   #authhero h2{font-family:var(--sans);font-weight:700;font-size:41px;line-height:1.07;letter-spacing:-.015em;margin:0 0 18px;max-width:13ch}
   #authhero h2 i{font-style:italic;color:#46b277}
   #authhero .hsub{color:#a7a092;font-size:15px;line-height:1.6;max-width:44ch;margin:0 0 30px}
-  .figrow{display:flex;gap:12px;margin-bottom:28px}
-  .figcard{flex:1;background:#1d1a14;border:1px solid #2c281f;border-radius:10px;padding:11px 11px 9px}
+  .figrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:28px}
+  .figcard{flex:1;min-width:0;background:#1d1a14;border:1px solid #2c281f;border-radius:10px;padding:11px 11px 9px}
   .figcard svg{width:100%;height:auto;display:block}
   .figcard .fcap{font-family:var(--mono);font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;color:#7b7466;margin-top:8px}
   #authhero .hrule{height:1px;background:#2c281f;margin:0 0 18px}
@@ -251,9 +251,15 @@
   #authhero .htrust svg{width:19px;height:19px;color:#46b277;flex:0 0 19px;margin-top:1px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   #authhero .hfoot{position:absolute;left:52px;bottom:26px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:#5c574b}
   @media (max-width:980px){
-    #authhero{display:none}
-    #login{flex:1 1 100%}
-    .mobpitch{display:block}
+    /* stack vertically: sign-in form on top, full marketing hero below (scrollable) */
+    #overlay{flex-direction:column;overflow-y:auto;overflow-x:hidden}
+    .figrow{gap:8px}
+    .figcard .fcap{font-size:7.5px}
+    #login{flex:0 0 auto;justify-content:flex-start;align-items:center;overflow:visible;padding:42px 24px 34px}
+    #authhero{display:flex;flex:0 0 auto;justify-content:flex-start;padding:40px 26px 46px}
+    #authhero h2{font-size:32px}
+    #authhero .hfoot{position:static;left:auto;bottom:auto;margin-top:30px}
+    .mobpitch{display:none}   /* full hero now shows on mobile, so drop the compact pitch */
   }
 
   /* icons + example prompts */
@@ -927,5 +933,5 @@ paintLogos();
 init();
 if(location.hash==='#pilot')openPilot();   // deep-link straight to the pilot form
 </script>
-</body>
+<script>addEventListener("load",function(){setTimeout(function(){var d=document.documentElement;var wide=[];document.querySelectorAll("body *").forEach(function(e){if(e.scrollWidth>innerWidth+1||e.getBoundingClientRect().right>innerWidth+2){wide.push((e.id||e.className||e.tagName)+":"+Math.round(e.getBoundingClientRect().right))}});document.title="IW"+innerWidth+"|SW"+d.scrollWidth+"|OVF:"+wide.slice(0,8).join(",")},300)})</script></body>
 </html>
