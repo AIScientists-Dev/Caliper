@@ -190,16 +190,58 @@
   .row{display:flex;justify-content:space-between;font-size:13px;padding:7px 9px;border-radius:6px;cursor:pointer;color:var(--mut)}
   .row:hover{background:var(--panel2);color:var(--text)} .row.sel{color:var(--text);background:var(--panel2);font-weight:600}
   .row span{color:var(--faint);font-size:11px;font-family:var(--mono)}
-  #overlay{position:fixed;inset:0;background:rgba(28,26,21,.42);display:none;align-items:center;justify-content:center;z-index:9}
-  #login{background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:30px;width:340px}
-  #login input{width:100%;padding:11px 12px;border-radius:7px;border:1px solid var(--line2);background:var(--bg);color:var(--text);margin-bottom:12px;outline:none;font-family:var(--sans);font-size:14px}
-  #login input:focus{border-color:var(--text)}
-  .lbrand{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:8px}
+  /* sign-in: full-screen split — form on the left, marketing hero on the right */
+  #overlay{position:fixed;inset:0;background:var(--bg);display:none;align-items:stretch;z-index:9}
+  #login{flex:1 1 50%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px 32px;background:var(--bg);min-width:0;overflow:auto}
+  .lwrap{width:100%;max-width:362px}
+  #login input{width:100%;padding:11px 12px 11px 38px;border-radius:8px;border:1px solid var(--line2);background:var(--panel);color:var(--text);margin-bottom:0;outline:none;font-family:var(--sans);font-size:14px}
+  #login input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(47,143,87,.12)}
+  .lbrand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:18px;font-weight:600;margin-bottom:30px}
   .lbrand .dot{display:inline-flex;align-items:center}
-  .lbrand .dot .ic.spark{width:20px;height:auto;color:var(--text)}
-  .lsub{color:var(--mut);font-size:13px;text-align:center;margin:0 0 18px}
-  .connectcard{background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:22px;text-align:center}
+  .lbrand .dot .ic.spark{width:22px;height:auto;color:var(--text)}
+  .lhead{font-family:var(--sans);font-weight:700;font-size:29px;line-height:1.12;letter-spacing:-.01em;margin:0 0 7px}
+  .lsub{color:var(--mut);font-size:13.5px;line-height:1.5;margin:0 0 24px}
+  .lfield{position:relative;margin-bottom:14px}
+  .lfield .fi{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--faint);pointer-events:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .lfield .eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--faint);cursor:pointer;background:none;border:none;padding:0}
+  .lfield .eye svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .lfield .eye:hover{color:var(--text)}
+  .lprimary{width:100%;justify-content:center;margin-top:8px;font-size:14px;padding:12px}
+  .ldiv{display:flex;align-items:center;gap:12px;color:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin:24px 0 16px}
+  .ldiv::before,.ldiv::after{content:"";flex:1;height:1px;background:var(--line2)}
+  .lcta{text-align:center;font-size:13.5px;color:var(--mut)}
+  .lcta a{color:var(--green);font-weight:600;text-decoration:none}
+  .lcta a:hover{text-decoration:underline}
+  .llinkwrap{text-align:center;margin-top:20px}
+  .llink{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);text-decoration:none}
+  .llink:hover{color:var(--text)}
+  .connectcard{background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:22px;text-align:center}
   .connectcard .muted{color:var(--mut);font-size:12.5px}
+  /* compact pitch shown only on narrow screens (hero is hidden there) */
+  .mobpitch{display:none;margin-bottom:24px}
+  .mobpitch .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:9px}
+  .mobpitch h3{font-family:var(--sans);font-weight:700;font-size:21px;line-height:1.15;letter-spacing:-.01em;margin:0}
+  .mobpitch h3 i{font-style:italic;color:var(--green)}
+  /* dark marketing hero (always dark, independent of app theme) */
+  #authhero{flex:1 1 50%;background:#17150f;color:#ece9e0;padding:56px 52px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;background-image:radial-gradient(1100px 480px at 82% -12%,rgba(70,178,119,.16),transparent 62%)}
+  #authhero .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#46b277;display:flex;align-items:center;gap:9px;margin-bottom:22px}
+  #authhero .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:#46b277;box-shadow:0 0 10px rgba(70,178,119,.8)}
+  #authhero h2{font-family:var(--sans);font-weight:700;font-size:41px;line-height:1.07;letter-spacing:-.015em;margin:0 0 18px;max-width:13ch}
+  #authhero h2 i{font-style:italic;color:#46b277}
+  #authhero .hsub{color:#a7a092;font-size:15px;line-height:1.6;max-width:44ch;margin:0 0 30px}
+  .figrow{display:flex;gap:12px;margin-bottom:28px}
+  .figcard{flex:1;background:#1d1a14;border:1px solid #2c281f;border-radius:10px;padding:11px 11px 9px}
+  .figcard svg{width:100%;height:auto;display:block}
+  .figcard .fcap{font-family:var(--mono);font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;color:#7b7466;margin-top:8px}
+  #authhero .hrule{height:1px;background:#2c281f;margin:0 0 18px}
+  #authhero .htrust{display:flex;align-items:flex-start;gap:11px;color:#cfcabb;font-family:var(--sans);font-size:13.5px;font-weight:500;text-transform:none;letter-spacing:0;line-height:1.5;max-width:46ch}
+  #authhero .htrust svg{width:19px;height:19px;color:#46b277;flex:0 0 19px;margin-top:1px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #authhero .hfoot{position:absolute;left:52px;bottom:26px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:#5c574b}
+  @media (max-width:980px){
+    #authhero{display:none}
+    #login{flex:1 1 100%}
+    .mobpitch{display:block}
+  }
 
   /* icons + example prompts */
   .ic{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle}
@@ -235,7 +277,7 @@
     .empty{margin-top:12vh}
     #drawer{width:100%}
     .msg{margin:18px 0}
-    #login{width:88vw}
+    #login{padding:32px 22px}
   }
   @media (min-width:821px){#sidebar{transform:none!important}}
 </style>
@@ -335,22 +377,36 @@
   </div>
 </div>
 
-<div id="overlay"><div id="login">
+<div id="overlay">
+ <div id="login">
   <!-- Step 1: anonymous sign-in — no lab is named here -->
-  <div id="signin">
-    <div class="lbrand"><span class="dot">⟡</span> Caliper</div>
-    <p class="lsub">Sign in to your secure workspace</p>
-    <input id="email" type="email" placeholder="email" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
-    <input id="pw" type="password" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Sign in</button>
-    <div id="loginerr" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center"></div>
-    <div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line2)">
-      <a href="https://morphmind.ai/products/caliper" style="color:var(--green);font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;text-decoration:none">What is Caliper? →</a>
+  <div id="signin" class="lwrap">
+    <div class="lbrand"><span class="dot"></span> Caliper</div>
+    <!-- compact pitch for narrow screens (the dark hero is hidden there) -->
+    <div class="mobpitch">
+      <div class="eyebrow">Secure AI analyst for research labs</div>
+      <h3>Just ask — and your lab's <i>analysis runs itself.</i></h3>
     </div>
+    <h1 class="lhead">Sign in</h1>
+    <p class="lsub">Access your lab's secure Caliper workspace.</p>
+    <div class="lfield">
+      <svg class="fi" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+      <input id="email" type="email" placeholder="you@lab.edu" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="lfield">
+      <svg class="fi" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <input id="pw" type="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button type="button" class="eye" onclick="togglePw(this)" aria-label="Show password"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+    <button class="btn primary lprimary" onclick="doLogin()">Sign in →</button>
+    <div id="loginerr" style="color:var(--red);font-size:12px;margin-top:9px;text-align:center"></div>
+    <div class="ldiv">New to Caliper</div>
+    <p class="lcta">No workspace yet? <a href="mailto:support@morphmind.ai?subject=Caliper%20pilot%20request&body=Hi%20%E2%80%94%20we%27d%20like%20to%20start%20a%20Caliper%20pilot.%20Our%20lab%2Fteam%3A%20%0AAssays%2Ftools%20we%20use%3A%20%0A">Start a free pilot →</a></p>
+    <div class="llinkwrap"><a class="llink" href="https://morphmind.ai/products/caliper">What is Caliper? →</a></div>
   </div>
   <!-- Step 2: reveal the destination (only after auth) and confirm the connection -->
-  <div id="connect" style="display:none">
-    <div class="lbrand" style="font-size:18px"><span class="dot">⟡</span> Caliper</div>
+  <div id="connect" class="lwrap" style="display:none">
+    <div class="lbrand" style="font-size:18px"><span class="dot"></span> Caliper</div>
     <p class="lsub">Signed in as <b id="cwho" style="color:var(--text)"></b></p>
     <div class="scon" id="scon">
       <div class="scnode" id="scn0">
@@ -378,7 +434,51 @@
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:14px" onclick="doConnect()">Connect →</button>
     <div style="text-align:center;margin-top:10px"><a href="#" onclick="backToSignin();return false" style="color:var(--faint);font-size:12px">cancel</a></div>
   </div>
-</div></div>
+ </div><!-- /#login -->
+ <aside id="authhero">
+   <div class="eyebrow">Secure AI analyst for research labs</div>
+   <h2>Just ask — and your lab's <i>analysis runs itself.</i></h2>
+   <p class="hsub">Ask in plain English. Caliper runs the analysis, builds the figures, and tells you how much to trust every result.</p>
+   <div class="figrow">
+     <div class="figcard">
+       <svg viewBox="0 0 150 96" aria-hidden="true">
+         <line x1="18" y1="8" x2="18" y2="84" stroke="#3a352a" stroke-width="1"/>
+         <line x1="18" y1="84" x2="142" y2="84" stroke="#3a352a" stroke-width="1"/>
+         <g fill="#5c574b"><circle cx="74" cy="70" r="3"/><circle cx="82" cy="66" r="3"/><circle cx="68" cy="74" r="3"/><circle cx="88" cy="72" r="3"/><circle cx="78" cy="60" r="3"/></g>
+         <g fill="#d9776b"><circle cx="34" cy="34" r="3.2"/><circle cx="42" cy="26" r="3.2"/><circle cx="28" cy="44" r="3.2"/><circle cx="46" cy="40" r="3.2"/><circle cx="36" cy="20" r="3.2"/></g>
+         <g fill="#46b277"><circle cx="112" cy="32" r="3.2"/><circle cx="122" cy="24" r="3.2"/><circle cx="104" cy="42" r="3.2"/><circle cx="128" cy="38" r="3.2"/><circle cx="118" cy="18" r="3.2"/></g>
+       </svg>
+       <div class="fcap">RNA-seq · diff. expression</div>
+     </div>
+     <div class="figcard">
+       <svg viewBox="0 0 150 96" aria-hidden="true">
+         <g fill="#46b277"><circle cx="30" cy="28" r="3"/><circle cx="38" cy="24" r="3"/><circle cx="34" cy="34" r="3"/><circle cx="26" cy="33" r="3"/></g>
+         <g fill="#6ea8d8"><circle cx="64" cy="22" r="3"/><circle cx="72" cy="28" r="3"/><circle cx="68" cy="18" r="3"/><circle cx="60" cy="30" r="3"/></g>
+         <g fill="#caa24a"><circle cx="112" cy="30" r="3"/><circle cx="120" cy="26" r="3"/><circle cx="116" cy="38" r="3"/><circle cx="108" cy="34" r="3"/></g>
+         <g fill="#a98cd9"><circle cx="40" cy="64" r="3"/><circle cx="48" cy="70" r="3"/><circle cx="44" cy="60" r="3"/><circle cx="34" cy="68" r="3"/></g>
+         <g fill="#d9776b"><circle cx="78" cy="66" r="3"/><circle cx="86" cy="72" r="3"/><circle cx="82" cy="60" r="3"/><circle cx="74" cy="74" r="3"/></g>
+         <g fill="#e0a3d0"><circle cx="118" cy="66" r="3"/><circle cx="126" cy="60" r="3"/><circle cx="122" cy="72" r="3"/><circle cx="112" cy="64" r="3"/></g>
+       </svg>
+       <div class="fcap">Single-cell · cell types</div>
+     </div>
+     <div class="figcard">
+       <svg viewBox="0 0 150 96" aria-hidden="true">
+         <line x1="14" y1="78" x2="142" y2="78" stroke="#3a352a" stroke-width="1"/>
+         <path d="M14 78 L14 70 Q30 70 36 50 Q42 30 52 30 Q60 30 66 56 Q70 70 84 70 Q92 70 98 44 Q104 22 114 22 Q122 22 128 58 Q132 70 142 70 L142 78 Z" fill="#46b277" fill-opacity="0.82"/>
+         <rect x="40" y="82" width="18" height="4" rx="1.5" fill="#caa24a"/>
+         <rect x="100" y="82" width="20" height="4" rx="1.5" fill="#caa24a"/>
+       </svg>
+       <div class="fcap">ChIP-seq · peaks</div>
+     </div>
+   </div>
+   <div class="hrule"></div>
+   <div class="htrust">
+     <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+     <div>Runs on your own lab server — your raw data never leaves your infrastructure.</div>
+   </div>
+   <div class="hfoot">by MorphMind · a control layer for trustworthy science</div>
+ </aside>
+</div><!-- /#overlay -->
 
 <script>
 let SID=null, SELECTED=[], CWD="";
@@ -393,6 +493,7 @@ async function doLogin(){
   const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value,password:$('pw').value})});
   if(r.ok){ await showConnect(); } else $('loginerr').textContent='Incorrect email or password.';
 }
+function togglePw(btn){const i=$('pw');if(!i)return;i.type=i.type==='password'?'text':'password';btn.style.color=i.type==='text'?'var(--green)':'';}
 async function showConnect(){
   const w=await(await api('/api/whoami')).json();
   $('cwho').textContent=w.email||'';
